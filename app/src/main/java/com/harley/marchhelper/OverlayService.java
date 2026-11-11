@@ -51,7 +51,7 @@ public class OverlayService extends Service {
 
     private static final String CHANNEL = "overlay";
     private static final int NOTIF_ID = 1;
-    private static final int HEADER_DP = 34;
+    private static final int HEADER_DP = 30;
 
     // Marchitect palette (iOS dark)
     private static final int C_BG = Color.parseColor("#000000");
@@ -70,12 +70,12 @@ public class OverlayService extends Service {
     private LinearLayout panel;
     private WindowManager.LayoutParams panelLp;
     private WebView web;
-    private TextView expandBtn;
+    private final TextView[] sizeBtns = new TextView[3];
+    private TextView title;
     private boolean panelShown = false;
-    private boolean expanded = false;
-    private int contentHeightDp = 260;
-    private final float[] alphas = {1f, 0.85f, 0.65f};
-    private int alphaIdx = 0;
+    private boolean keyboard = false;
+    private String mode = "m"; // s = numbers only, m = core, l = full
+    private int contentHeightDp = 240;
 
     private TextView trash;
     private WindowManager.LayoutParams trashLp;
@@ -84,6 +84,7 @@ public class OverlayService extends Service {
     private MediaProjection projection;
     private ScreenReader reader;
     private long lastMax = -1;
+    private String lastScout = "";
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -99,6 +100,10 @@ public class OverlayService extends Service {
         createBubble();
         createPanel();
         createTrash();
+        mode = getSharedPreferences("overlay", MODE_PRIVATE).getString("mode", "m");
+        applyMode();
+        // Auto-read is always on: ask for screen capture as soon as the overlay starts.
+        main.postDelayed(this::requestCapture, 300);
     }
 
     @Override
@@ -187,13 +192,27 @@ public class OverlayService extends Service {
             }, main);
 
             Point s = screen();
-            reader = new ScreenReader(projection, (max, sel) -> main.post(() -> {
-                if (max == lastMax) return;
-                lastMax = max;
-                js("window.onMarchRead&&onMarchRead(" + max + "," + sel + ")");
-            }));
+            reader = new ScreenReader(projection, new ScreenReader.Listener() {
+                @Override
+                public void onMarch(long max, long sel) {
+                    main.post(() -> {
+                        if (max == lastMax) return;
+                        lastMax = max;
+                        js("window.onMarchRead&&onMarchRead(" + max + "," + sel + ")");
+                    });
+                }
+
+                @Override
+                public void onScout(long g, long r, long m, long sg) {
+                    main.post(() -> {
+                        String key = g + "," + r + "," + m + "," + sg;
+                        if (key.equals(lastScout)) return;
+                        lastScout = key;
+                        js("window.onScoutRead&&onScoutRead(" + key + ")");
+                    });
+                }
+            });
             reader.start(s.x, s.y, getResources().getDisplayMetrics().densityDpi);
-            reader.setPaused(!panelShown);
             lastMax = -1;
             pushAutoState(true);
         } catch (Exception e) {
@@ -361,10 +380,19 @@ public class OverlayService extends Service {
             public boolean dispatchKeyEvent(KeyEvent event) {
                 if (event.getKeyCode() == KeyEvent.KEYCODE_BACK
                         && event.getAction() == KeyEvent.ACTION_UP) {
-                    hidePanel();
+                    setKeyboard(false);
                     return true;
                 }
                 return super.dispatchKeyEvent(event);
+            }
+
+            @Override
+            public boolean dispatchTouchEvent(MotionEvent ev) {
+                if (ev.getActionMasked() == MotionEvent.ACTION_OUTSIDE) {
+                    setKeyboard(false);
+                    return false;
+                }
+                return super.dispatchTouchEvent(ev);
             }
         };
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -385,31 +413,44 @@ public class OverlayService extends Service {
 
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.badge_march);
-        header.addView(logo, new LinearLayout.LayoutParams(dp(20), dp(20)));
+        header.addView(logo, new LinearLayout.LayoutParams(dp(18), dp(18)));
 
-        TextView title = new TextView(this);
+        title = new TextView(this);
         title.setText("Marchitect");
         title.setTextColor(C_TINT);
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         title.setGravity(Gravity.CENTER_VERTICAL);
-        title.setPadding(dp(7), 0, 0, 0);
+        title.setPadding(dp(6), 0, 0, 0);
+        title.setSingleLine(true);
         header.addView(title, new LinearLayout.LayoutParams(0, dp(HEADER_DP), 1f));
 
-        TextView fade = headerBtn("◐", 15);
-        fade.setOnClickListener(v -> {
-            alphaIdx = (alphaIdx + 1) % alphas.length;
-            panelLp.alpha = alphas[alphaIdx];
-            if (panelShown) wm.updateViewLayout(panel, panelLp);
-        });
-        header.addView(fade);
+        // S / M / L size toggle (iOS segmented control)
+        LinearLayout seg = new LinearLayout(this);
+        seg.setPadding(dp(2), dp(2), dp(2), dp(2));
+        GradientDrawable segBg = new GradientDrawable();
+        segBg.setColor(Color.parseColor("#3D767680"));
+        segBg.setCornerRadius(dp(7));
+        seg.setBackground(segBg);
+        String[] labels = {"S", "M", "L"};
+        String[] modes = {"s", "m", "l"};
+        for (int i = 0; i < 3; i++) {
+            TextView b = new TextView(this);
+            b.setText(labels[i]);
+            b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f);
+            b.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            b.setGravity(Gravity.CENTER);
+            final String m = modes[i];
+            b.setOnClickListener(v -> setMode(m));
+            seg.addView(b, new LinearLayout.LayoutParams(dp(24), dp(20)));
+            sizeBtns[i] = b;
+        }
+        LinearLayout.LayoutParams segLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        segLp.leftMargin = dp(4);
+        header.addView(seg, segLp);
 
-        expandBtn = headerBtn("›", 22);
-        expandBtn.setRotation(90);
-        expandBtn.setOnClickListener(v -> setExpanded(!expanded));
-        header.addView(expandBtn);
-
-        TextView close = headerBtn("—", 15);
+        TextView close = headerBtn("—", 14);
         close.setOnClickListener(v -> hidePanel());
         header.addView(close);
 
@@ -439,7 +480,7 @@ public class OverlayService extends Service {
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(HEADER_DP)));
 
         web = new WebView(this);
-        web.setBackgroundColor(C_BG);
+        web.setBackgroundColor(Color.TRANSPARENT);
         WebSettings ws = web.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
@@ -451,7 +492,7 @@ public class OverlayService extends Service {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                view.evaluateJavascript("window.setMode&&setMode('" + (expanded ? "expanded" : "compact") + "')", null);
+                view.evaluateJavascript("window.setMode&&setMode('" + mode + "')", null);
                 pushAutoState(reader != null);
             }
         });
@@ -460,36 +501,75 @@ public class OverlayService extends Service {
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
         Point s = screen();
-        panelLp = overlayParams(compactWidth(), compactHeight(), true);
-        panelLp.x = s.x - compactWidth() - dp(8);
+        panelLp = overlayParams(widthFor("m"), heightFor("m"), false);
+        panelLp.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+        panelLp.x = s.x - widthFor("m") - dp(8);
         panelLp.y = dp(72);
     }
 
-    private int compactWidth() {
-        return Math.min(dp(280), screen().x - dp(16));
+    private int widthFor(String m) {
+        int w = m.equals("s") ? 150 : m.equals("m") ? 236 : 320;
+        return Math.min(dp(w), screen().x - dp(16));
     }
 
-    private int compactHeight() {
-        return Math.min(dp(HEADER_DP + contentHeightDp), (int) (screen().y * 0.6));
+    private int heightFor(String m) {
+        float cap = m.equals("l") ? 0.75f : 0.6f;
+        return Math.min(dp(HEADER_DP + contentHeightDp), (int) (screen().y * cap));
     }
 
-    private void setExpanded(boolean on) {
-        expanded = on;
-        Point s = screen();
+    private void setMode(String m) {
+        if (m.equals(mode)) return;
+        mode = m;
+        getSharedPreferences("overlay", MODE_PRIVATE).edit().putString("mode", m).apply();
         int oldRight = panelLp.x + panelLp.width;
-        if (on) {
-            panelLp.width = Math.min(dp(340), s.x - dp(16));
-            panelLp.height = Math.min(dp(560), (int) (s.y * 0.75));
-        } else {
-            panelLp.width = compactWidth();
-            panelLp.height = compactHeight();
-        }
-        // keep the panel's right edge in place and on screen
+        applyMode();
+        // keep the panel's right edge where it was
+        Point s = screen();
         panelLp.x = Math.max(0, Math.min(oldRight - panelLp.width, s.x - panelLp.width));
-        panelLp.y = Math.max(0, Math.min(panelLp.y, s.y - panelLp.height));
-        expandBtn.setRotation(on ? -90 : 90);
         if (panelShown) wm.updateViewLayout(panel, panelLp);
-        web.evaluateJavascript("window.setMode&&setMode('" + (on ? "expanded" : "compact") + "')", null);
+        web.evaluateJavascript("window.setMode&&setMode('" + m + "')", null);
+    }
+
+    private void applyMode() {
+        boolean small = mode.equals("s");
+        for (int i = 0; i < 3; i++) {
+            boolean on = "sml".charAt(i) == mode.charAt(0);
+            GradientDrawable bg = new GradientDrawable();
+            bg.setColor(on ? Color.parseColor("#636366") : Color.TRANSPARENT);
+            bg.setCornerRadius(dp(5));
+            sizeBtns[i].setBackground(bg);
+            sizeBtns[i].setTextColor(on ? Color.WHITE : C_DIM);
+        }
+        title.setVisibility(small ? View.GONE : View.VISIBLE);
+        // small: see-through, so the game shows behind the numbers
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(small ? Color.parseColor("#66000000") : C_BG);
+        if (!small) bg.setStroke(Math.max(1, dp(1) / 2), C_LINE);
+        bg.setCornerRadius(dp(12));
+        panel.setBackground(bg);
+        panel.getChildAt(0).setBackgroundColor(small ? Color.parseColor("#99000000") : C_CARD);
+        panelLp.width = widthFor(mode);
+        panelLp.height = heightFor(mode);
+    }
+
+    /** The panel never takes focus (so Evony keeps getting your taps) except while you type in it. */
+    private void setKeyboard(boolean on) {
+        if (on == keyboard) return;
+        keyboard = on;
+        if (on) panelLp.flags &= ~WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        else panelLp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        if (panelShown) wm.updateViewLayout(panel, panelLp);
+        android.view.inputmethod.InputMethodManager imm =
+                (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (on) {
+            main.postDelayed(() -> {
+                web.requestFocus();
+                imm.showSoftInput(web, 0);
+            }, 120);
+        } else {
+            imm.hideSoftInputFromWindow(web.getWindowToken(), 0);
+            web.evaluateJavascript("window.dropFocus&&dropFocus()", null);
+        }
     }
 
     private TextView headerBtn(String label, int sp) {
@@ -511,7 +591,6 @@ public class OverlayService extends Service {
         if (panelShown) return;
         wm.addView(panel, panelLp);
         panelShown = true;
-        if (reader != null) reader.setPaused(false);
         // keep the bubble above the panel
         safeRemove(bubble);
         wm.addView(bubble, bubbleLp);
@@ -519,9 +598,9 @@ public class OverlayService extends Service {
 
     private void hidePanel() {
         if (!panelShown) return;
+        setKeyboard(false);
         safeRemove(panel);
         panelShown = false;
-        if (reader != null) reader.setPaused(true);
     }
 
     // ---------------- helpers ----------------
@@ -578,19 +657,21 @@ public class OverlayService extends Service {
             main.post(() -> {
                 if (cssPx <= 0 || Math.abs(cssPx - contentHeightDp) < 2) return;
                 contentHeightDp = cssPx;
-                if (!expanded) {
-                    panelLp.height = compactHeight();
-                    if (panelShown) wm.updateViewLayout(panel, panelLp);
-                }
+                panelLp.height = heightFor(mode);
+                if (panelShown) wm.updateViewLayout(panel, panelLp);
             });
         }
 
         @JavascriptInterface
-        public void toggleAutoRead() {
+        public void requestAutoRead() {
             main.post(() -> {
-                if (reader != null) stopCapture();
-                else requestCapture();
+                if (reader == null) requestCapture();
             });
+        }
+
+        @JavascriptInterface
+        public void wantKeyboard(boolean on) {
+            main.post(() -> setKeyboard(on));
         }
 
         @JavascriptInterface

@@ -63,11 +63,11 @@ public class MainActivity extends Activity {
         LinearLayout card = card();
         card.addView(row("1", "Allow Marchitect to display over other apps."));
         card.addView(divider());
-        card.addView(row("2", "Tap Start. The gold bubble appears."));
+        card.addView(row("2", "Tap Start, then allow screen capture so the overlay can read Evony. The gold bubble appears."));
         card.addView(divider());
-        card.addView(row("3", "In Evony, tap the bubble. Drag the header to move the panel; tap ⌄ for the full view."));
+        card.addView(row("3", "In Evony, tap the bubble. Drag the header to move the panel. S shows just your layer numbers, M adds march size and the counter, L is the full view."));
         card.addView(divider());
-        card.addView(row("4", "Tap Auto in the panel, then open Create Presets. Your march size fills in by itself and updates as you switch presets."));
+        card.addView(row("4", "Open Create Presets and your march size fills in by itself. Open a scout report and the counter picks what to send."));
         root.addView(card);
 
         root.addView(section("Setup"));
@@ -90,8 +90,8 @@ public class MainActivity extends Activity {
         root.addView(stopBtn);
 
         TextView note = text(
-                "Auto-read uses Android's screen capture to read the troop counter. Text is read on your phone "
-                        + "and never leaves it. Android asks for permission each time you turn it on.\n\n"
+                "Auto-read uses Android's screen capture to read march sizes and scout reports. Text is read on your phone "
+                        + "and never leaves it. Android asks for permission each time the overlay starts.\n\n"
                         + "Marchitect is a fan-made tool and isn't affiliated with Evony or Top Games.",
                 13, C_DIM);
         note.setPadding(dp(16), dp(14), dp(16), 0);

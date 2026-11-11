@@ -13,121 +13,143 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--text);
-    font:15px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,Roboto,sans-serif;
+    font:14px/1.25 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,Roboto,sans-serif;
     -webkit-font-smoothing:antialiased;letter-spacing:-.2px;-webkit-user-select:none;user-select:none}
   input{-webkit-user-select:text;user-select:text}
-  #app{padding:8px 10px 10px}
+  #app{padding:6px 8px 8px}
   .hide{display:none!important}
   .ic{width:18px;height:18px;object-fit:contain;flex:none}
 
-  /* segmented control (iOS) */
-  .seg{display:flex;background:var(--fill);border-radius:9px;padding:2px}
+  /* ---------- SMALL: numbers only, see-through ---------- */
+  html.m-s,body.m-s{background:transparent}
+  body.m-s #app{padding:3px 7px 5px}
+  .sm .r{display:flex;justify-content:space-between;gap:8px;padding:1.5px 0;font-variant-numeric:tabular-nums;
+    text-shadow:0 1px 2px #000,0 0 4px #000}
+  .sm .r b{color:var(--tint);font-weight:700}
+  .sm .r span{font-weight:700}
+  .sm .r.lo b,.sm .r.lo span{color:rgba(235,235,245,.75);font-weight:600;font-size:12.5px}
+  .sm .none{color:var(--dim);font-size:12px;text-shadow:0 1px 2px #000}
+
+  /* ---------- segmented control (iOS) ---------- */
+  .seg{display:flex;background:var(--fill);border-radius:8px;padding:2px}
   .seg button{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:none;border:0;color:var(--text);
-    font:500 12.5px/1 -apple-system,system-ui,Roboto,sans-serif;padding:6px 2px;border-radius:7px;position:relative;min-height:28px}
-  .seg button+button::before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:.5px;background:rgba(142,142,147,.4)}
-  .seg button.on{background:#636366;font-weight:600;box-shadow:0 3px 8px rgba(0,0,0,.12)}
+    font:500 12px/1 -apple-system,system-ui,Roboto,sans-serif;padding:5px 2px;border-radius:6px;position:relative;min-height:26px}
+  .seg button+button::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:.5px;background:rgba(142,142,147,.4)}
+  .seg button.on{background:#636366;font-weight:600}
   .seg button.on::before,.seg button.on+button::before{display:none}
 
-  /* march size */
-  .ms{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-  .ms .ic{width:26px;height:26px}
-  .ms .lab{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.1px}
-  .ms input{display:block;width:100%;background:none;border:0;color:var(--text);padding:0;
-    font:700 22px/1.15 -apple-system,system-ui,Roboto,sans-serif;letter-spacing:.2px;font-variant-numeric:tabular-nums}
-  .ms input:focus{outline:none;color:var(--tint)}
+  /* ---------- MEDIUM core ---------- */
+  .ms{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .ms .ic{width:22px;height:22px}
   .ms .grow{flex:1;min-width:0}
-  .auto{display:flex;align-items:center;gap:5px;background:var(--fill2);border:0;border-radius:99px;color:var(--dim);
-    font:600 12px/1 -apple-system,system-ui,Roboto,sans-serif;padding:7px 10px;flex:none}
-  .auto i{width:7px;height:7px;border-radius:50%;background:var(--dim3)}
-  .auto.on{color:var(--tint);background:var(--tint-dim)} .auto.on i{background:var(--green);box-shadow:0 0 6px var(--green)}
-  .auto.flash{animation:fl .6s}
-  @keyframes fl{0%{background:rgba(48,209,88,.45)}100%{background:var(--tint-dim)}}
+  .ms .lab{font-size:10.5px;color:var(--dim);text-transform:uppercase;display:flex;align-items:center;gap:4px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--dim3);display:inline-block}
+  .dot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
+  .ms input{display:block;width:100%;background:none;border:0;color:var(--text);padding:0;
+    font:700 19px/1.15 -apple-system,system-ui,Roboto,sans-serif;font-variant-numeric:tabular-nums}
+  .ms input:focus{outline:none;color:var(--tint)}
+  .ms input.flash{animation:fl .7s}
+  @keyframes fl{0%{color:var(--green)}100%{color:var(--text)}}
+  .enable{background:var(--tint-dim);color:var(--tint);border:0;border-radius:99px;font:600 11px/1 system-ui;padding:6px 8px;flex:none}
 
-  .ctl{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+  .ctl{display:flex;gap:5px;align-items:center;margin-bottom:6px}
   .ctl .seg{flex:1}
-  .ctl .seg button{padding:4px 2px}
-  .ctl .seg .ic{width:20px;height:20px}
-  .step{display:flex;align-items:center;background:var(--fill);border-radius:9px;height:32px;flex:none}
-  .step button{width:28px;height:100%;background:none;border:0;color:var(--tint);font:600 18px/1 system-ui}
-  .step span{min-width:30px;text-align:center;font:600 14px/1 -apple-system,system-ui,Roboto,sans-serif}
+  .ctl .seg button{padding:3px 1px;min-height:26px}
+  .ctl .seg .ic{width:18px;height:18px}
+  .step{display:flex;align-items:center;background:var(--fill);border-radius:8px;height:30px;flex:none}
+  .step button{width:24px;height:100%;background:none;border:0;color:var(--tint);font:600 17px/1 system-ui}
+  .step span{min-width:28px;text-align:center;font:600 13px/1 -apple-system,system-ui,Roboto,sans-serif}
 
-  /* layer list */
-  .card{background:var(--card);border-radius:10px;overflow:hidden}
-  .lr{display:flex;align-items:center;gap:8px;padding:6px 10px;position:relative;font-variant-numeric:tabular-nums}
-  .lr+.lr::before{content:"";position:absolute;top:0;left:10px;right:0;height:.5px;background:var(--line)}
-  .lr .t{width:34px;font-weight:600;color:var(--tint)}
-  .lr .t.lo{color:var(--dim);font-weight:500}
+  .card{background:var(--card);border-radius:9px;overflow:hidden}
+  .lr{display:flex;align-items:center;gap:6px;padding:5px 8px;position:relative;font-variant-numeric:tabular-nums}
+  .lr+.lr::before{content:"";position:absolute;top:0;left:8px;right:0;height:.5px;background:var(--line)}
+  .lr .t{width:30px;font-weight:600;color:var(--tint)}
   .lr .n{flex:1;text-align:right;font-weight:600}
-  .lr .p{width:40px;text-align:right;color:var(--dim);font-size:12.5px}
-  .lr.sub{color:var(--dim);font-size:12.5px;padding-top:6px;padding-bottom:6px}
+  .lr .p{width:36px;text-align:right;color:var(--dim);font-size:11.5px}
+  .lr.sub{color:var(--dim);font-size:11.5px;padding-top:4px;padding-bottom:4px}
   .lr.sub .n{font-weight:500;color:var(--text)}
-  .warn{color:#FF9F0A;font-size:12px;margin:6px 2px 0}
-  .empty{color:var(--dim);font-size:13px;padding:10px;text-align:center}
+  .warn{color:#FF9F0A;font-size:11.5px;margin:5px 2px 0}
+  .empty{color:var(--dim);font-size:12px;padding:8px;text-align:center}
 
-  /* expanded-only */
-  .tabs{margin-bottom:10px}
-  h3{margin:14px 0 6px 10px;font-size:12px;font-weight:400;text-transform:uppercase;color:var(--dim);letter-spacing:-.05px}
-  .fld{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 10px;position:relative}
-  .fld+.fld::before{content:"";position:absolute;top:0;left:10px;right:0;height:.5px;background:var(--line)}
-  .fld label{flex:1;font-size:15px}
-  .fld input{width:90px;background:none;border:0;color:var(--dim);text-align:right;font:15px -apple-system,system-ui,Roboto,sans-serif}
+  .sc{display:flex;align-items:center;gap:7px;margin-top:6px;background:var(--card);border-radius:9px;padding:6px 8px}
+  .sc .ic{width:24px;height:24px}
+  .sc .k{font-size:10.5px;color:var(--dim);text-transform:uppercase}
+  .sc .v{font-weight:600;font-size:13.5px}
+
+  /* ---------- LARGE extras ---------- */
+  .tabs{margin-bottom:8px}
+  h3{margin:12px 0 5px 8px;font-size:11px;font-weight:400;text-transform:uppercase;color:var(--dim)}
+  .fld{display:flex;align-items:center;gap:8px;min-height:36px;padding:0 8px;position:relative}
+  .fld+.fld::before{content:"";position:absolute;top:0;left:8px;right:0;height:.5px;background:var(--line)}
+  .fld label{flex:1;font-size:14px}
+  .fld input{width:80px;background:none;border:0;color:var(--dim);text-align:right;font:14px -apple-system,system-ui,Roboto,sans-serif}
   .fld input:focus{outline:none;color:var(--text)}
-  .fld .seg{width:170px}
-  .copy{display:block;width:100%;margin-top:10px;background:var(--tint);color:#000;border:0;border-radius:10px;
-    padding:10px;font:600 15px/1.2 -apple-system,system-ui,Roboto,sans-serif}
-  .note{color:var(--dim);font-size:12.5px;line-height:17px;margin:6px 10px 0}
+  .fld .seg{width:150px}
+  .copy{display:block;width:100%;margin-top:8px;background:var(--tint);color:#000;border:0;border-radius:9px;
+    padding:9px;font:600 14px/1.2 -apple-system,system-ui,Roboto,sans-serif}
+  .note{color:var(--dim);font-size:11.5px;line-height:15px;margin:5px 8px 0}
 
-  .pick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-  .pick button{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card);border:0;border-radius:10px;
-    color:var(--dim);padding:8px 2px;font:500 12px/1 -apple-system,system-ui,Roboto,sans-serif}
-  .pick button .ic{width:30px;height:30px}
+  .res{display:flex;align-items:center;gap:10px;padding:10px}
+  .res .ic{width:42px;height:42px}
+  .res .k{font-size:11px;color:var(--dim);text-transform:uppercase}
+  .res .v{font:700 20px/1.2 -apple-system,system-ui,Roboto,sans-serif}
+  .res .s{font-size:12px;color:var(--dim);margin-top:1px}
+  .why{padding:0 10px 10px;font-size:13px;color:var(--dim)}
+  .mix{padding:4px 10px 8px}
+  .mx{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px}
+  .mx .ic{width:18px;height:18px}
+  .mx .nm{width:58px}
+  .mx .bar{flex:1;height:5px;border-radius:3px;background:var(--fill2);overflow:hidden}
+  .mx .bar i{display:block;height:100%;border-radius:3px}
+  .mx .pc{width:34px;text-align:right;color:var(--dim);font-variant-numeric:tabular-nums}
+  .pick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .pick button{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--card);border:0;border-radius:9px;
+    color:var(--dim);padding:6px 2px;font:500 11px/1 -apple-system,system-ui,Roboto,sans-serif}
+  .pick button .ic{width:24px;height:24px}
   .pick button.on{background:var(--card2);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--tint)}
-  .res{display:flex;align-items:center;gap:12px;padding:12px}
-  .res .ic{width:46px;height:46px}
-  .res .k{font-size:12px;color:var(--dim);text-transform:uppercase}
-  .res .v{font:700 22px/1.2 -apple-system,system-ui,Roboto,sans-serif}
-  .res .s{font-size:13px;color:var(--dim);margin-top:2px}
-  .why{padding:0 12px 12px;font-size:14px;color:var(--dim)}
   table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-  td,th{padding:7px 10px;text-align:right;font-size:14px}
-  th{font-weight:400;color:var(--dim);font-size:12px}
+  td,th{padding:6px 8px;text-align:right;font-size:13px}
+  th{font-weight:400;color:var(--dim);font-size:11px}
   td:first-child,th:first-child{text-align:left}
   tr+tr td{border-top:.5px solid var(--line)}
   .hi{color:var(--green);font-weight:700} .lo{color:var(--red)}
   .c-ground{color:var(--ground)} .c-ranged{color:var(--ranged)} .c-mounted{color:var(--mounted)} .c-siege{color:var(--siege)}
+  .b-ground{background:var(--ground)} .b-ranged{background:var(--ranged)} .b-mounted{background:var(--mounted)} .b-siege{background:var(--siege)}
 </style>
 </head>
-<body>
+<body class="m-m">
 <div id="app">
 
-  <!-- tabs (expanded only) -->
-  <div class="seg tabs xp" id="tabs"></div>
+  <!-- SMALL -->
+  <div class="sm" id="small"></div>
 
-  <!-- ===== LAYERS (core; this is the compact view) ===== -->
-  <section id="t-layers">
+  <!-- LARGE tabs -->
+  <div class="seg tabs" id="tabs"></div>
+
+  <!-- MEDIUM core (also the Layers tab in LARGE) -->
+  <section id="core">
     <div class="ms">
       <img class="ic" src="icons/glyph/march.webp" alt="">
       <div class="grow">
-        <div class="lab" id="msLab">March size</div>
+        <div class="lab"><span class="dot" id="dot"></span><span id="msLab">March size</span></div>
         <input id="size" type="text" inputmode="numeric" placeholder="0" autocomplete="off">
       </div>
-      <button class="auto" id="autoBtn"><i></i><span>Auto</span></button>
+      <button class="enable hide" id="enableBtn">Turn on</button>
     </div>
-
     <div class="ctl">
       <div class="seg" id="typeSeg"></div>
       <div class="step"><button id="tierDn">−</button><span id="tierLbl">T12</span><button id="tierUp">+</button></div>
     </div>
-
     <div class="card" id="layerOut"></div>
     <div class="warn hide" id="warn"></div>
+    <div class="sc hide" id="scoutLine"></div>
 
-    <div class="xp">
+    <div id="lgLayers">
       <h3>Settings</h3>
       <div class="card">
         <div class="fld"><label>Split</label><div class="seg" id="profile"></div></div>
-        <div class="fld"><label>Lower tiers, % each</label><input id="lowPct" type="number" inputmode="decimal" step="0.25" value="1"></div>
-        <div class="fld"><label>Other types, per tier</label><input id="thin" type="number" inputmode="numeric" value="1000"></div>
+        <div class="fld"><label>Lower tiers, % each</label><input id="lowPct" type="text" inputmode="decimal" value="1"></div>
+        <div class="fld"><label>Other types, per tier</label><input id="thin" type="text" inputmode="numeric" value="1000"></div>
         <div class="fld"><label>Round to</label><div class="seg" id="round"></div></div>
       </div>
       <button class="copy" id="copyBtn">Copy layers</button>
@@ -135,32 +157,15 @@
     </div>
   </section>
 
-  <!-- ===== COUNTERS ===== -->
-  <section id="t-counter" class="hide">
-    <h3 style="margin-top:0">Enemy is mostly</h3>
+  <!-- LARGE counter tab -->
+  <section id="counter">
+    <div class="card" id="scoutCard"></div>
+    <div class="card" id="counterOut" style="margin-top:8px"></div>
+    <h3>Or pick the enemy's main type</h3>
     <div class="pick" id="enemyPick"></div>
-    <div class="card" id="counterOut" style="margin-top:10px"></div>
     <h3>Damage multipliers · community data</h3>
     <div class="card"><table id="coefTable"></table></div>
-    <p class="note">Attacker (row) vs defender (column). Reported by players, not confirmed by Evony. Holds only when tiers, buffs and debuffs are about equal.</p>
-    <h3>Range &amp; speed (T12)</h3>
-    <div class="card"><table>
-      <tr><th>Type</th><th>Range</th><th>Speed</th></tr>
-      <tr><td class="c-mounted">Mounted</td><td>50</td><td>600</td></tr>
-      <tr><td class="c-ground">Ground</td><td>50</td><td>350</td></tr>
-      <tr><td class="c-ranged">Ranged</td><td>500</td><td>100</td></tr>
-      <tr><td class="c-siege">Siege</td><td>1,867</td><td>75</td></tr>
-    </table></div>
-  </section>
-
-  <!-- ===== DEFENSE ===== -->
-  <section id="t-defense" class="hide">
-    <h3 style="margin-top:0">Your keep</h3>
-    <div class="card"><div class="fld"><label>Keep level</label><input id="keep" type="number" inputmode="numeric" placeholder="e.g. 31"></div></div>
-    <h3>Layer per tier, per type</h3>
-    <div class="card"><div class="res"><img class="ic" src="icons/badge/shield.webp" alt="">
-      <div><div class="v" id="defOut">—</div><div class="s">Suggested starting size</div></div></div></div>
-    <p class="note">Defense layers can be much thicker than offense because your city has no march-size cap. Start with about 1,000 of every tier and type, then thicken. Strong attackers bring huge buffs, so thin layers alone won't hold.</p>
+    <p class="note">Attacker (row) vs defender (column). Reported by players, not confirmed by Evony.</p>
   </section>
 </div>
 
@@ -173,26 +178,32 @@ const COEF={ground:{ground:1,ranged:1.2,mounted:0.7,siege:1.1},ranged:{ground:0.
   mounted:{ground:1.2,ranged:0.8,mounted:1,siege:0.9},siege:{ground:0.35,ranged:0.4,mounted:0.3,siege:0.5}};
 const COUNTER={
   ground:{send:"mounted",alt:null,avoid:"ranged",why:"Mounted beats Ground and closes the distance fastest."},
-  ranged:{send:"ground",alt:"siege",avoid:"mounted",why:"Ground beats Ranged. Siege also tends to do well against Ranged from long range."},
-  mounted:{send:"ranged",alt:null,avoid:"ground",why:"Ranged beats Mounted. This is the usual pick against Mounted-heavy cities."},
-  siege:{send:"mounted",alt:"ground",avoid:null,why:"Siege is weak once enemies close in. Fast close-combat troops (Mounted, then Ground) reach it quickly."}};
+  ranged:{send:"ground",alt:"siege",avoid:"mounted",why:"Ground beats Ranged. Siege also does well against Ranged from long range."},
+  mounted:{send:"ranged",alt:null,avoid:"ground",why:"Ranged beats Mounted."},
+  siege:{send:"mounted",alt:"ground",avoid:null,why:"Siege is weak once enemies close in. Mounted, then Ground, reach it fastest."}};
 const SPLIT={guide:{ranged:[47,35,18],ground:[57,28,15],mounted:[58,29,13],siege:[57,28,15]},top:[65,23,12],even:[34,33,33]};
-const DEF=[[25,"5K – 10K"],[30,"20K – 50K"],[33,"50K – 100K"],[35,"200K+"],[99,"500K – 1M+"]];
 
 const store={get(k,d){try{const v=localStorage.getItem("mo_"+k);return v===null?d:v}catch(e){return d}},
              set(k,v){try{localStorage.setItem("mo_"+k,v)}catch(e){}}};
 const $=id=>document.getElementById(id);
 const fmt=n=>Math.round(n).toLocaleString("en-US");
+const short=n=>n>=1e6?(n/1e6).toFixed(2).replace(/\.?0+$/,"")+"M":n>=1e4?Math.round(n/1e3)+"K":fmt(n);
 const native=window.Overlay||null;
 
-/* ---------- mode: compact / expanded (set by the native header) ---------- */
-let expanded=false, tab=store.get("tab","layers");
+/* ---------- modes: s / m / l (set by the native header) ---------- */
+let mode="m", tab=store.get("tab","layers");
 function applyMode(){
-  document.querySelectorAll(".xp").forEach(e=>e.classList.toggle("hide",!expanded));
-  ["layers","counter","defense"].forEach(t=>$("t-"+t).classList.toggle("hide",expanded?tab!==t:t!=="layers"));
+  document.body.className="m-"+mode; document.documentElement.className="m-"+mode;
+  const S=mode==="s", L=mode==="l";
+  $("small").classList.toggle("hide",!S);
+  $("tabs").classList.toggle("hide",!L);
+  $("core").classList.toggle("hide",S||(L&&tab!=="layers"));
+  $("lgLayers").classList.toggle("hide",!L);
+  $("counter").classList.toggle("hide",!(L&&tab==="counter"));
+  paintScoutLine();
   reportHeight();
 }
-window.setMode=m=>{expanded=(m==="expanded");applyMode()};
+window.setMode=m=>{mode=m;applyMode()};
 function reportHeight(){
   if(!native||!native.setContentHeight) return;
   requestAnimationFrame(()=>native.setContentHeight(Math.ceil($("app").getBoundingClientRect().height)));
@@ -206,11 +217,24 @@ function seg(id,opts,cur,onPick){
     el.appendChild(b);
   });
 }
-seg("tabs",[["layers","Layers"],["counter","Counters"],["defense","Defense"]],tab,v=>{tab=v;store.set("tab",v);applyMode()});
+if(tab!=="counter") tab="layers";
+seg("tabs",[["layers","Layers"],["counter","Counter"]],tab,v=>{tab=v;store.set("tab",v);applyMode()});
+
+/* ---------- keyboard: the panel only takes focus while you type ---------- */
+document.addEventListener("pointerdown",e=>{
+  const el=e.target.closest&&e.target.closest("input");
+  if(el&&native&&native.wantKeyboard){ native.wantKeyboard(true); setTimeout(()=>el.focus(),80); }
+},true);
+document.addEventListener("focusout",()=>setTimeout(()=>{
+  const a=document.activeElement;
+  if(!a||a.tagName!=="INPUT"){ native&&native.wantKeyboard&&native.wantKeyboard(false); }
+},60));
+window.dropFocus=()=>{ const a=document.activeElement; if(a&&a.blur) a.blur(); };
 
 /* ---------- layers ---------- */
 let main=store.get("main","ranged"), tier=parseInt(store.get("tier","12"),10)||12;
 let prof=store.get("profile","guide"), R=store.get("round","100");
+let autoOn=false;
 seg("typeSeg",TYPES.map(t=>[t,glyph(t)]),main,v=>{main=v;store.set("main",v);calc()});
 seg("profile",[["guide","Guide"],["top","Top"],["even","Even"]],prof,v=>{prof=v;store.set("profile",v);calc()});
 seg("round",[["10","10"],["100","100"],["1000","1K"]],R,v=>{R=v;store.set("round",v);calc()});
@@ -221,26 +245,34 @@ function setSize(n){$("size").value=n?fmt(n):"";store.set("size",n||"")}
 ["lowPct","thin"].forEach(id=>{const el=$(id),v=store.get(id,null);if(v!==null)el.value=v;
   el.addEventListener("input",()=>{store.set(id,el.value);calc()})});
 setSize(parseInt(store.get("size","0"),10));
-$("size").addEventListener("input",()=>{setSize(sizeVal());setAutoLabel(false);calc()});
+$("size").addEventListener("input",()=>{setSize(sizeVal());$("msLab").textContent="March size";calc()});
 
 let lastRows=[];
 function calc(){
-  const S=sizeVal(), K=tier, out=$("layerOut"), warn=$("warn");
+  const S=sizeVal(), K=tier, out=$("layerOut"), warn=$("warn"), sm=$("small");
   const low=Math.max(0,parseFloat($("lowPct").value)||0)/100, thin=Math.max(0,parseInt($("thin").value,10)||0), r=parseInt(R,10);
   warn.classList.add("hide"); lastRows=[];
-  if(!S||S<100){out.innerHTML='<div class="empty">Enter a march size, or tap Auto to read it from your presets.</div>';reportHeight();return}
+  const fail=msg=>{out.innerHTML=`<div class="empty">${msg}</div>`;sm.innerHTML=`<div class="none">${msg}</div>`;reportHeight()};
+  if(!S||S<100) return fail(autoOn?"Open Create Presets to read your march size.":"Enter a march size.");
   const rnd=n=>Math.floor(n/r)*r;
   let split=(prof==="guide"?SPLIT.guide[main]:SPLIT[prof]).slice(0,Math.min(3,K));
   const sum=split.reduce((a,b)=>a+b,0); split=split.map(x=>x/sum);
-  const lowerN=Math.max(0,K-3), lowEach=rnd(S*low), thinTotal=thin*3*K, mainPool=S-thinTotal-lowEach*lowerN;
-  if(mainPool<=0){out.innerHTML='<div class="empty">Layers are bigger than the march. Lower the % or other-type count.</div>';reportHeight();return}
-  if(mainPool<S*0.6){warn.textContent="Lower and other-type layers use over 40% of the march.";warn.classList.remove("hide")}
+  const lowerN=Math.max(0,K-3), lowEach=rnd(S*low), thinTotal=thin*3*K, pool=S-thinTotal-lowEach*lowerN;
+  if(pool<=0) return fail("Layers exceed the march. Lower the % or other-type count.");
+  if(pool<S*0.6){warn.textContent="Lower and other-type layers use over 40% of the march.";warn.classList.remove("hide")}
   const rows=[]; let used=0;
-  split.forEach((p,i)=>{const n=rnd(mainPool*p);rows.push({t:K-i,n});used+=n}); rows[0].n+=mainPool-used;
+  split.forEach((p,i)=>{const n=rnd(pool*p);rows.push({t:K-i,n});used+=n}); rows[0].n+=pool-used;
+
   let h=rows.map(x=>`<div class="lr"><span class="t">T${x.t}</span><span class="n">${fmt(x.n)}</span><span class="p">${(x.n/S*100).toFixed(1)}%</span></div>`).join("");
-  if(lowerN&&lowEach) h+=`<div class="lr sub"><span>T1–T${K-3} ${NAME[main]}</span><span class="n">${fmt(lowEach)} each</span></div>`;
-  if(thin) h+=`<div class="lr sub"><span>Other types T1–T${K}</span><span class="n">${fmt(thin)} each</span></div>`;
+  if(lowerN&&lowEach) h+=`<div class="lr sub"><span>T1–${K-3} ${NAME[main]}</span><span class="n">${fmt(lowEach)} each</span></div>`;
+  if(thin) h+=`<div class="lr sub"><span>Other types T1–${K}</span><span class="n">${fmt(thin)} each</span></div>`;
   out.innerHTML=h;
+
+  let s=rows.map(x=>`<div class="r"><b>T${x.t}</b><span>${fmt(x.n)}</span></div>`).join("");
+  if(lowerN&&lowEach) s+=`<div class="r lo"><b>T1–${K-3}</b><span>${fmt(lowEach)}</span></div>`;
+  if(thin) s+=`<div class="r lo"><b>Other</b><span>${fmt(thin)}</span></div>`;
+  sm.innerHTML=s;
+
   lastRows=rows.map(x=>`T${x.t} ${NAME[main]}: ${fmt(x.n)}`);
   if(lowerN&&lowEach) lastRows.push(`T1-T${K-3} ${NAME[main]}: ${fmt(lowEach)} each`);
   if(thin) lastRows.push(`Other types T1-T${K}: ${fmt(thin)} each`);
@@ -253,45 +285,71 @@ $("copyBtn").onclick=()=>{
   $("copyBtn").textContent="Copied"; setTimeout(()=>$("copyBtn").textContent="Copy layers",1200);
 };
 
-/* ---------- auto-read (screen reading is done natively) ---------- */
-let autoOn=false;
-function setAutoLabel(fromScreen){ $("msLab").textContent=fromScreen?"March size · read from screen":"March size"; }
-function paintAuto(){ $("autoBtn").classList.toggle("on",autoOn); }
-$("autoBtn").onclick=()=>{
-  if(!native||!native.toggleAutoRead){ $("msLab").textContent="Auto-read works in the Android app"; return; }
-  native.toggleAutoRead();
-};
-window.onAutoState=on=>{autoOn=!!on;paintAuto();if(!autoOn)setAutoLabel(false)};
+/* ---------- auto-read (runs natively, all the time) ---------- */
+function paintAuto(){
+  $("dot").classList.toggle("on",autoOn);
+  $("enableBtn").classList.toggle("hide",autoOn||!native);
+  if(!autoOn) $("msLab").textContent="March size";
+}
+$("enableBtn").onclick=()=>{ native&&native.requestAutoRead&&native.requestAutoRead(); };
+window.onAutoState=on=>{autoOn=!!on;paintAuto();calc()};
 window.onMarchRead=(max)=>{
   max=parseInt(max,10); if(!max) return;
-  if(sizeVal()!==max){ setSize(max); calc();
-    const b=$("autoBtn"); b.classList.remove("flash"); void b.offsetWidth; b.classList.add("flash"); }
-  setAutoLabel(true);
+  if(sizeVal()!==max){ setSize(max); calc(); const el=$("size"); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+  $("msLab").textContent="March size · auto";
 };
-if(native&&native.isAutoRead){ autoOn=native.isAutoRead(); paintAuto(); }
 
-/* ---------- counters ---------- */
-let enemy=store.get("enemy","mounted");
+/* ---------- counter (scout reports) ---------- */
+let scout=null; try{scout=JSON.parse(store.get("scout","null"))}catch(e){}
+let enemyPick=store.get("enemy","");
+function mainOf(sc){ if(!sc) return null; let best=null,tot=0; TYPES.forEach(t=>{tot+=sc[t]||0; if(!best||(sc[t]||0)>(sc[best]||0)) best=t}); return tot>0?best:null; }
+function ago(ts){ const m=Math.round((Date.now()-ts)/60000); return m<1?"just now":m<60?m+" min ago":Math.round(m/60)+" h ago"; }
+function enemyType(){ return enemyPick || mainOf(scout); }
+window.onScoutRead=(g,r,m,s)=>{
+  scout={ground:+g,ranged:+r,mounted:+m,siege:+s,ts:Date.now()};
+  store.set("scout",JSON.stringify(scout)); enemyPick=""; store.set("enemy","");
+  document.querySelectorAll("#enemyPick button").forEach(b=>b.classList.remove("on"));
+  renderCounter();
+};
+function paintScoutLine(){
+  const el=$("scoutLine"), e=enemyType();
+  if(mode!=="m"||!e){el.classList.add("hide");return}
+  const c=COUNTER[e];
+  el.innerHTML=`${badge(c.send)}<div><div class="k">${!enemyPick&&scout?"Scouted "+ago(scout.ts):"Enemy picked"} · ${NAME[e]}</div>
+    <div class="v">Send <span class="c-${c.send}">${NAME[c.send]}</span>${c.alt?` <span style="color:var(--dim);font-weight:400">or ${NAME[c.alt]}</span>`:""}</div></div>`;
+  el.classList.remove("hide");
+}
 function renderCounter(){
-  const c=COUNTER[enemy];
-  $("counterOut").innerHTML=`<div class="res">${badge(c.send)}<div><div class="k">Send</div><div class="v c-${c.send}">${NAME[c.send]}</div>`+
-    (c.alt?`<div class="s">Also good: ${NAME[c.alt]}</div>`:"")+(c.avoid?`<div class="s">Avoid: ${NAME[c.avoid]}</div>`:"")+
-    `</div></div><div class="why">${c.why}</div>`;
+  const sc=$("scoutCard");
+  if(mainOf(scout)){
+    const tot=TYPES.reduce((a,t)=>a+(scout[t]||0),0);
+    sc.innerHTML=`<div class="res" style="padding-bottom:4px">${badge("scout")}<div><div class="k">Last scout · ${ago(scout.ts)}</div>
+      <div class="v">${short(tot)} troops</div></div></div><div class="mix">`+
+      TYPES.map(t=>{const p=(scout[t]||0)/tot*100;return `<div class="mx">${glyph(t)}<span class="nm">${NAME[t]}</span>
+        <span class="bar"><i class="b-${t}" style="width:${p}%"></i></span><span class="pc">${Math.round(p)}%</span></div>`}).join("")+`</div>`;
+  } else {
+    sc.innerHTML=`<div class="res">${badge("scout")}<div><div class="v" style="font-size:15px">No scout yet</div>
+      <div class="s">Open a scout report in Evony and it's read automatically.</div></div></div>`;
+  }
+  const e=enemyType(), out=$("counterOut");
+  if(!e){ out.innerHTML=`<div class="empty">Scout a target, or pick its main type below.</div>`; }
+  else { const c=COUNTER[e];
+    out.innerHTML=`<div class="res">${badge(c.send)}<div><div class="k">Enemy mostly ${NAME[e]} · send</div><div class="v c-${c.send}">${NAME[c.send]}</div>`+
+      (c.alt?`<div class="s">Also good: ${NAME[c.alt]}</div>`:"")+(c.avoid?`<div class="s">Avoid: ${NAME[c.avoid]}</div>`:"")+
+      `</div></div><div class="why">${c.why}</div>`; }
   let h=`<tr><th>Atk \\ Def</th>${TYPES.map(t=>`<th>${NAME[t].slice(0,3)}</th>`).join("")}</tr>`;
   TYPES.forEach(a=>{h+=`<tr><td class="c-${a}">${NAME[a]}</td>`+TYPES.map(d=>{const v=COEF[a][d];
-    const cls=d===enemy&&v>=1.1?"hi":d===enemy&&v<1?"lo":"";return `<td class="${cls}">${v}</td>`}).join("")+"</tr>"});
-  $("coefTable").innerHTML=h; reportHeight();
+    const cls=d===e&&v>=1.1?"hi":d===e&&v<1?"lo":"";return `<td class="${cls}">${v}</td>`}).join("")+"</tr>"});
+  $("coefTable").innerHTML=h;
+  paintScoutLine(); reportHeight();
 }
 (function(){const el=$("enemyPick");TYPES.forEach(t=>{const b=document.createElement("button");b.innerHTML=glyph(t)+NAME[t];
-  if(t===enemy)b.classList.add("on");b.onclick=()=>{enemy=t;store.set("enemy",t);el.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));renderCounter()};el.appendChild(b)})})();
+  if(t===enemyPick)b.classList.add("on");
+  b.onclick=()=>{enemyPick=enemyPick===t?"":t;store.set("enemy",enemyPick);el.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b&&enemyPick===t));renderCounter()};
+  el.appendChild(b)})})();
 
-/* ---------- defense ---------- */
-$("keep").value=store.get("keep","");
-function defCalc(){store.set("keep",$("keep").value);const k=parseInt($("keep").value,10);
-  $("defOut").textContent=k?DEF.find(r=>k<=r[0])[1]:"—"}
-$("keep").addEventListener("input",defCalc);
-
-renderCounter(); defCalc(); calc(); applyMode();
+if(native&&native.isAutoRead){ autoOn=native.isAutoRead(); }
+paintAuto(); renderCounter(); calc(); applyMode();
 window.addEventListener("load",reportHeight);
 document.querySelectorAll("img").forEach(i=>i.addEventListener("load",reportHeight));
 </script>
