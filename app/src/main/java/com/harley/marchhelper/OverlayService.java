@@ -13,11 +13,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.graphics.Color;
+import android.graphics.Outline;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -28,35 +31,59 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class OverlayService extends Service {
 
+    static final String ACTION_STOP = "com.harley.marchhelper.STOP";
+    static final String ACTION_PROJECTION = "com.harley.marchhelper.PROJECTION";
+    static final String EXTRA_CODE = "code";
+    static final String EXTRA_DATA = "data";
+
     private static final String CHANNEL = "overlay";
-    private static final String ACTION_STOP = "com.harley.marchhelper.STOP";
+    private static final int NOTIF_ID = 1;
+    private static final int HEADER_DP = 34;
+
+    // Marchitect palette (iOS dark)
+    private static final int C_BG = Color.parseColor("#000000");
+    private static final int C_CARD = Color.parseColor("#1C1C1E");
+    private static final int C_LINE = Color.parseColor("#545458");
+    private static final int C_TINT = Color.parseColor("#F2B544");
+    private static final int C_DIM = Color.parseColor("#99EBEBF5");
+    private static final int C_RED = Color.parseColor("#FF453A");
 
     private WindowManager wm;
     private Handler main;
 
-    private TextView bubble;
+    private ImageView bubble;
     private WindowManager.LayoutParams bubbleLp;
 
     private LinearLayout panel;
     private WindowManager.LayoutParams panelLp;
     private WebView web;
+    private TextView expandBtn;
     private boolean panelShown = false;
+    private boolean expanded = false;
+    private int contentHeightDp = 260;
     private final float[] alphas = {1f, 0.85f, 0.65f};
     private int alphaIdx = 0;
 
     private TextView trash;
     private WindowManager.LayoutParams trashLp;
     private boolean trashShown = false;
+
+    private MediaProjection projection;
+    private ScreenReader reader;
+    private long lastMax = -1;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -68,7 +95,7 @@ public class OverlayService extends Service {
         super.onCreate();
         main = new Handler(Looper.getMainLooper());
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        goForeground();
+        goForeground(false);
         createBubble();
         createPanel();
         createTrash();
@@ -76,14 +103,19 @@ public class OverlayService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && ACTION_STOP.equals(intent.getAction())) {
-            stopSelf();
+        if (intent != null) {
+            if (ACTION_STOP.equals(intent.getAction())) {
+                stopSelf();
+            } else if (ACTION_PROJECTION.equals(intent.getAction())) {
+                onProjectionResult(intent);
+            }
         }
         return START_NOT_STICKY;
     }
 
     @Override
     public void onDestroy() {
+        stopCapture();
         safeRemove(bubble);
         if (panelShown) safeRemove(panel);
         if (trashShown) safeRemove(trash);
@@ -91,9 +123,9 @@ public class OverlayService extends Service {
         super.onDestroy();
     }
 
-    // ---------- foreground notification ----------
+    // ---------------- notification ----------------
 
-    private void goForeground() {
+    private void goForeground(boolean capturing) {
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.createNotificationChannel(new NotificationChannel(
                 CHANNEL, "Overlay", NotificationManager.IMPORTANCE_LOW));
@@ -105,38 +137,113 @@ public class OverlayService extends Service {
                 new Intent(this, MainActivity.class), PendingIntent.FLAG_IMMUTABLE);
 
         Notification n = new Notification.Builder(this, CHANNEL)
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle("March Helper is running")
-                .setContentText("Tap the gold bubble to open the panel.")
+                .setSmallIcon(R.drawable.ic_notif)
+                .setContentTitle("Marchitect Overlay is running")
+                .setContentText(capturing
+                        ? "Auto-read is on: reading march size from your presets."
+                        : "Tap the bubble to open the panel.")
                 .setContentIntent(open)
-                .addAction(new Notification.Action.Builder((android.graphics.drawable.Icon) null, "Stop", stop).build())
+                .addAction(new Notification.Action.Builder(
+                        (android.graphics.drawable.Icon) null, "Stop", stop).build())
                 .setOngoing(true)
                 .build();
 
         if (Build.VERSION.SDK_INT >= 34) {
-            startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            int type = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE;
+            if (capturing) type |= ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION;
+            startForeground(NOTIF_ID, n, type);
+        } else if (Build.VERSION.SDK_INT >= 29 && capturing) {
+            startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION);
         } else {
-            startForeground(1, n);
+            startForeground(NOTIF_ID, n);
         }
     }
 
-    // ---------- bubble ----------
+    // ---------------- auto-read (screen capture + on-device OCR) ----------------
+
+    private void requestCapture() {
+        Intent i = new Intent(this, CaptureActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        startActivity(i);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void onProjectionResult(Intent intent) {
+        int code = intent.getIntExtra(EXTRA_CODE, 0);
+        Intent data = intent.getParcelableExtra(EXTRA_DATA);
+        if (code != android.app.Activity.RESULT_OK || data == null) {
+            pushAutoState(false);
+            return;
+        }
+        try {
+            goForeground(true); // must happen before getMediaProjection on Android 14+
+            MediaProjectionManager mpm = getSystemService(MediaProjectionManager.class);
+            projection = mpm.getMediaProjection(code, data);
+            projection.registerCallback(new MediaProjection.Callback() {
+                @Override
+                public void onStop() {
+                    main.post(() -> stopCapture());
+                }
+            }, main);
+
+            Point s = screen();
+            reader = new ScreenReader(projection, (max, sel) -> main.post(() -> {
+                if (max == lastMax) return;
+                lastMax = max;
+                js("window.onMarchRead&&onMarchRead(" + max + "," + sel + ")");
+            }));
+            reader.start(s.x, s.y, getResources().getDisplayMetrics().densityDpi);
+            reader.setPaused(!panelShown);
+            lastMax = -1;
+            pushAutoState(true);
+        } catch (Exception e) {
+            stopCapture();
+        }
+    }
+
+    private void stopCapture() {
+        boolean was = reader != null || projection != null;
+        if (reader != null) {
+            reader.stop();
+            reader = null;
+        }
+        if (projection != null) {
+            try { projection.stop(); } catch (Exception ignored) { }
+            projection = null;
+        }
+        if (was) {
+            try { goForeground(false); } catch (Exception ignored) { }
+        }
+        pushAutoState(false);
+    }
+
+    private void pushAutoState(boolean on) {
+        js("window.onAutoState&&onAutoState(" + on + ")");
+    }
+
+    private void js(String code) {
+        main.post(() -> {
+            if (web != null) web.evaluateJavascript(code, null);
+        });
+    }
+
+    // ---------------- bubble ----------------
 
     @SuppressLint("ClickableViewAccessibility")
     private void createBubble() {
-        bubble = new TextView(this);
-        bubble.setText("⚔");
-        bubble.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
-        bubble.setTextColor(Color.parseColor("#1B1B1B"));
-        bubble.setGravity(Gravity.CENTER);
-        GradientDrawable bg = new GradientDrawable();
-        bg.setShape(GradientDrawable.OVAL);
-        bg.setColor(Color.parseColor("#E3B04B"));
-        bg.setStroke(dp(2), Color.parseColor("#1B202A"));
-        bubble.setBackground(bg);
+        bubble = new ImageView(this);
+        bubble.setImageResource(R.drawable.bubble);
+        bubble.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        bubble.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setOval(0, 0, view.getWidth(), view.getHeight());
+            }
+        });
+        bubble.setClipToOutline(true);
         bubble.setElevation(dp(6));
 
-        bubbleLp = overlayParams(dp(52), dp(52), false);
+        bubbleLp = overlayParams(dp(50), dp(50), false);
         bubbleLp.x = 0;
         bubbleLp.y = screen().y / 3;
 
@@ -176,11 +283,8 @@ public class OverlayService extends Service {
                         } else {
                             boolean kill = overTrash();
                             showTrash(false);
-                            if (kill) {
-                                stopSelf();
-                            } else {
-                                snapToEdge();
-                            }
+                            if (kill) stopSelf();
+                            else snapToEdge();
                         }
                         return true;
                 }
@@ -200,15 +304,12 @@ public class OverlayService extends Service {
         a.setInterpolator(new DecelerateInterpolator());
         a.addUpdateListener(an -> {
             bubbleLp.x = (int) an.getAnimatedValue();
-            try {
-                wm.updateViewLayout(bubble, bubbleLp);
-            } catch (Exception ignored) {
-            }
+            try { wm.updateViewLayout(bubble, bubbleLp); } catch (Exception ignored) { }
         });
         a.start();
     }
 
-    // ---------- dismiss target ----------
+    // ---------------- drag-to-close target ----------------
 
     private void createTrash() {
         trash = new TextView(this);
@@ -218,7 +319,7 @@ public class OverlayService extends Service {
         trash.setGravity(Gravity.CENTER);
         GradientDrawable bg = new GradientDrawable();
         bg.setShape(GradientDrawable.OVAL);
-        bg.setColor(Color.parseColor("#CC2A313E"));
+        bg.setColor(Color.parseColor("#CC2C2C2E"));
         trash.setBackground(bg);
         trashLp = overlayParams(dp(64), dp(64), false);
         trashLp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
@@ -239,19 +340,19 @@ public class OverlayService extends Service {
 
     private void highlightTrash(boolean on) {
         GradientDrawable bg = (GradientDrawable) trash.getBackground();
-        bg.setColor(Color.parseColor(on ? "#E2675B" : "#CC2A313E"));
+        bg.setColor(on ? C_RED : Color.parseColor("#CC2C2C2E"));
         trash.setScaleX(on ? 1.2f : 1f);
         trash.setScaleY(on ? 1.2f : 1f);
     }
 
     private boolean overTrash() {
         Point s = screen();
-        int bx = bubbleLp.x + dp(26), by = bubbleLp.y + dp(26);
+        int bx = bubbleLp.x + dp(25), by = bubbleLp.y + dp(25);
         int tx = s.x / 2, ty = s.y - dp(48) - dp(32);
         return Math.hypot(bx - tx, by - ty) < dp(80);
     }
 
-    // ---------- panel ----------
+    // ---------------- panel ----------------
 
     @SuppressLint({"SetJavaScriptEnabled", "ClickableViewAccessibility"})
     private void createPanel() {
@@ -268,37 +369,47 @@ public class OverlayService extends Service {
         };
         panel.setOrientation(LinearLayout.VERTICAL);
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(Color.parseColor("#12151C"));
-        bg.setStroke(dp(1), Color.parseColor("#E3B04B"));
-        bg.setCornerRadius(dp(12));
+        bg.setColor(C_BG);
+        bg.setStroke(Math.max(1, dp(1) / 2), C_LINE);
+        bg.setCornerRadius(dp(14));
         panel.setBackground(bg);
         panel.setClipToOutline(true);
-        panel.setElevation(dp(8));
+        panel.setElevation(dp(10));
 
-        // header: drag handle + buttons
+        // header: grip/title (drag) + fade + expand + hide
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setBackgroundColor(Color.parseColor("#1B202A"));
-        header.setPadding(dp(12), 0, dp(4), 0);
+        header.setBackgroundColor(C_CARD);
+        header.setPadding(dp(10), 0, dp(2), 0);
+
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.badge_march);
+        header.addView(logo, new LinearLayout.LayoutParams(dp(20), dp(20)));
 
         TextView title = new TextView(this);
-        title.setText("⠿  March Helper");
-        title.setTextColor(Color.parseColor("#E3B04B"));
-        title.setTypeface(null, Typeface.BOLD);
+        title.setText("Marchitect");
+        title.setTextColor(C_TINT);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        header.addView(title, new LinearLayout.LayoutParams(0, dp(40), 1f));
         title.setGravity(Gravity.CENTER_VERTICAL);
+        title.setPadding(dp(7), 0, 0, 0);
+        header.addView(title, new LinearLayout.LayoutParams(0, dp(HEADER_DP), 1f));
 
-        TextView fade = headerBtn("◐");
+        TextView fade = headerBtn("◐", 15);
         fade.setOnClickListener(v -> {
             alphaIdx = (alphaIdx + 1) % alphas.length;
             panelLp.alpha = alphas[alphaIdx];
-            wm.updateViewLayout(panel, panelLp);
+            if (panelShown) wm.updateViewLayout(panel, panelLp);
         });
         header.addView(fade);
 
-        TextView close = headerBtn("—");
+        expandBtn = headerBtn("›", 22);
+        expandBtn.setRotation(90);
+        expandBtn.setOnClickListener(v -> setExpanded(!expanded));
+        header.addView(expandBtn);
+
+        TextView close = headerBtn("—", 15);
         close.setOnClickListener(v -> hidePanel());
         header.addView(close);
 
@@ -318,43 +429,76 @@ public class OverlayService extends Service {
                     case MotionEvent.ACTION_MOVE:
                         panelLp.x = sx + (int) (e.getRawX() - dx);
                         panelLp.y = Math.max(0, sy + (int) (e.getRawY() - dy));
-                        wm.updateViewLayout(panel, panelLp);
+                        if (panelShown) wm.updateViewLayout(panel, panelLp);
                         return true;
                 }
                 return false;
             }
         });
         panel.addView(header, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(40)));
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(HEADER_DP)));
 
         web = new WebView(this);
-        web.setBackgroundColor(Color.parseColor("#12151C"));
+        web.setBackgroundColor(C_BG);
         WebSettings ws = web.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
         ws.setAllowFileAccess(true);
         ws.setTextZoom(100);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        web.setVerticalScrollBarEnabled(false);
         web.addJavascriptInterface(new Bridge(), "Overlay");
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                view.evaluateJavascript("window.setMode&&setMode('" + (expanded ? "expanded" : "compact") + "')", null);
+                pushAutoState(reader != null);
+            }
+        });
         web.loadUrl("file:///android_asset/index.html");
         panel.addView(web, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
         Point s = screen();
-        int w = Math.min(dp(340), s.x - dp(16));
-        int h = Math.min(dp(500), (int) (s.y * 0.7));
-        panelLp = overlayParams(w, h, true);
-        panelLp.x = (s.x - w) / 2;
-        panelLp.y = dp(64);
+        panelLp = overlayParams(compactWidth(), compactHeight(), true);
+        panelLp.x = s.x - compactWidth() - dp(8);
+        panelLp.y = dp(72);
     }
 
-    private TextView headerBtn(String label) {
+    private int compactWidth() {
+        return Math.min(dp(280), screen().x - dp(16));
+    }
+
+    private int compactHeight() {
+        return Math.min(dp(HEADER_DP + contentHeightDp), (int) (screen().y * 0.6));
+    }
+
+    private void setExpanded(boolean on) {
+        expanded = on;
+        Point s = screen();
+        int oldRight = panelLp.x + panelLp.width;
+        if (on) {
+            panelLp.width = Math.min(dp(340), s.x - dp(16));
+            panelLp.height = Math.min(dp(560), (int) (s.y * 0.75));
+        } else {
+            panelLp.width = compactWidth();
+            panelLp.height = compactHeight();
+        }
+        // keep the panel's right edge in place and on screen
+        panelLp.x = Math.max(0, Math.min(oldRight - panelLp.width, s.x - panelLp.width));
+        panelLp.y = Math.max(0, Math.min(panelLp.y, s.y - panelLp.height));
+        expandBtn.setRotation(on ? -90 : 90);
+        if (panelShown) wm.updateViewLayout(panel, panelLp);
+        web.evaluateJavascript("window.setMode&&setMode('" + (on ? "expanded" : "compact") + "')", null);
+    }
+
+    private TextView headerBtn(String label, int sp) {
         TextView b = new TextView(this);
         b.setText(label);
-        b.setTextColor(Color.parseColor("#E8EBF0"));
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        b.setTextColor(C_DIM);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         b.setGravity(Gravity.CENTER);
-        b.setLayoutParams(new LinearLayout.LayoutParams(dp(40), dp(40)));
+        b.setLayoutParams(new LinearLayout.LayoutParams(dp(36), dp(HEADER_DP)));
         return b;
     }
 
@@ -367,6 +511,7 @@ public class OverlayService extends Service {
         if (panelShown) return;
         wm.addView(panel, panelLp);
         panelShown = true;
+        if (reader != null) reader.setPaused(false);
         // keep the bubble above the panel
         safeRemove(bubble);
         wm.addView(bubble, bubbleLp);
@@ -376,13 +521,16 @@ public class OverlayService extends Service {
         if (!panelShown) return;
         safeRemove(panel);
         panelShown = false;
+        if (reader != null) reader.setPaused(true);
     }
 
-    // ---------- helpers ----------
+    // ---------------- helpers ----------------
 
     private WindowManager.LayoutParams overlayParams(int w, int h, boolean focusable) {
         int flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                // keeps our own windows out of the screen reader's view
+                | WindowManager.LayoutParams.FLAG_SECURE;
         if (!focusable) flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 w, h,
@@ -390,9 +538,7 @@ public class OverlayService extends Service {
                 flags,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.START;
-        if (focusable) {
-            lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
-        }
+        if (focusable) lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
         return lp;
     }
 
@@ -425,6 +571,31 @@ public class OverlayService extends Service {
                 ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 cm.setPrimaryClip(ClipData.newPlainText("March layers", text));
             });
+        }
+
+        @JavascriptInterface
+        public void setContentHeight(int cssPx) {
+            main.post(() -> {
+                if (cssPx <= 0 || Math.abs(cssPx - contentHeightDp) < 2) return;
+                contentHeightDp = cssPx;
+                if (!expanded) {
+                    panelLp.height = compactHeight();
+                    if (panelShown) wm.updateViewLayout(panel, panelLp);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void toggleAutoRead() {
+            main.post(() -> {
+                if (reader != null) stopCapture();
+                else requestCapture();
+            });
+        }
+
+        @JavascriptInterface
+        public boolean isAutoRead() {
+            return reader != null;
         }
     }
 }

@@ -3,290 +3,297 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>March Helper</title>
+<title>Marchitect Overlay</title>
 <style>
   :root{
-    --bg:#12151c; --panel:#1b202a; --line:#2a313e; --text:#e8ebf0; --dim:#8b94a5;
-    --gold:#e3b04b; --good:#4fc28a; --bad:#e2675b;
-    --ground:#c98a4b; --ranged:#4fa3e0; --mounted:#b07de8; --siege:#9aa3ad;
+    --bg:#000; --card:#1C1C1E; --card2:#2C2C2E; --fill:rgba(118,118,128,.24); --fill2:rgba(118,118,128,.18);
+    --text:#fff; --dim:rgba(235,235,245,.6); --dim3:rgba(235,235,245,.3); --line:rgba(84,84,88,.65);
+    --tint:#F2B544; --tint-dim:rgba(242,181,68,.18); --red:#FF453A; --green:#30D158;
+    --ground:#AC8E68; --ranged:#30D158; --mounted:#FF6961; --siege:#98989D;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.35 system-ui,-apple-system,Roboto,sans-serif}
-  body{padding-bottom:12px}
-  nav{display:flex;position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:2}
-  nav button{flex:1;background:none;border:0;color:var(--dim);padding:10px 4px;font:600 13px system-ui;border-bottom:2px solid transparent}
-  nav button.on{color:var(--gold);border-color:var(--gold)}
-  section{display:none;padding:10px}
-  section.on{display:block}
-  h3{margin:12px 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
-  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .tbtn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:9px 2px;font:600 12px system-ui}
-  .tbtn.on{border-color:currentColor;background:#232a36}
-  .t-ground{color:var(--ground)} .t-ranged{color:var(--ranged)} .t-mounted{color:var(--mounted)} .t-siege{color:var(--siege)}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px}
-  .big{font-size:20px;font-weight:700}
-  .muted{color:var(--dim);font-size:12px}
-  label{display:block;font-size:12px;color:var(--dim);margin-bottom:3px}
-  input,select{width:100%;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px;font:15px system-ui}
-  input:focus,select:focus{outline:none;border-color:var(--gold)}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  td,th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:right}
-  td:first-child,th:first-child{text-align:left}
-  th{color:var(--dim);font-weight:600;font-size:11px}
-  .hi{color:var(--good);font-weight:700} .lo{color:var(--bad)}
-  .warn{color:var(--bad);font-size:12px;margin-top:6px}
-  .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
-  .copy{background:var(--gold);color:#1b1b1b;border:0;border-radius:8px;padding:8px 12px;font:700 13px system-ui}
-  .pill{display:inline-block;padding:1px 7px;border-radius:99px;background:#232a36;font-size:11px;color:var(--dim)}
-  .bar{height:6px;border-radius:3px;background:var(--gold);opacity:.85}
-  body{-webkit-user-select:none;user-select:none}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;letter-spacing:-.2px;-webkit-user-select:none;user-select:none}
   input{-webkit-user-select:text;user-select:text}
-  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-  .seg button{flex:1;background:var(--panel);color:var(--dim);border:0;border-right:1px solid var(--line);padding:9px 2px;font:600 12px system-ui}
-  .seg button:last-child{border-right:0}
-  .seg button.on{background:#2b3240;color:var(--gold)}
-  .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--panel);height:40px}
-  .stepper button{width:40px;height:100%;background:none;border:0;color:var(--gold);font:700 20px system-ui}
-  .stepper span{flex:1;text-align:center;font:600 15px system-ui}
+  #app{padding:8px 10px 10px}
+  .hide{display:none!important}
+  .ic{width:18px;height:18px;object-fit:contain;flex:none}
+
+  /* segmented control (iOS) */
+  .seg{display:flex;background:var(--fill);border-radius:9px;padding:2px}
+  .seg button{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:none;border:0;color:var(--text);
+    font:500 12.5px/1 -apple-system,system-ui,Roboto,sans-serif;padding:6px 2px;border-radius:7px;position:relative;min-height:28px}
+  .seg button+button::before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:.5px;background:rgba(142,142,147,.4)}
+  .seg button.on{background:#636366;font-weight:600;box-shadow:0 3px 8px rgba(0,0,0,.12)}
+  .seg button.on::before,.seg button.on+button::before{display:none}
+
+  /* march size */
+  .ms{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .ms .ic{width:26px;height:26px}
+  .ms .lab{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.1px}
+  .ms input{display:block;width:100%;background:none;border:0;color:var(--text);padding:0;
+    font:700 22px/1.15 -apple-system,system-ui,Roboto,sans-serif;letter-spacing:.2px;font-variant-numeric:tabular-nums}
+  .ms input:focus{outline:none;color:var(--tint)}
+  .ms .grow{flex:1;min-width:0}
+  .auto{display:flex;align-items:center;gap:5px;background:var(--fill2);border:0;border-radius:99px;color:var(--dim);
+    font:600 12px/1 -apple-system,system-ui,Roboto,sans-serif;padding:7px 10px;flex:none}
+  .auto i{width:7px;height:7px;border-radius:50%;background:var(--dim3)}
+  .auto.on{color:var(--tint);background:var(--tint-dim)} .auto.on i{background:var(--green);box-shadow:0 0 6px var(--green)}
+  .auto.flash{animation:fl .6s}
+  @keyframes fl{0%{background:rgba(48,209,88,.45)}100%{background:var(--tint-dim)}}
+
+  .ctl{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+  .ctl .seg{flex:1}
+  .ctl .seg button{padding:4px 2px}
+  .ctl .seg .ic{width:20px;height:20px}
+  .step{display:flex;align-items:center;background:var(--fill);border-radius:9px;height:32px;flex:none}
+  .step button{width:28px;height:100%;background:none;border:0;color:var(--tint);font:600 18px/1 system-ui}
+  .step span{min-width:30px;text-align:center;font:600 14px/1 -apple-system,system-ui,Roboto,sans-serif}
+
+  /* layer list */
+  .card{background:var(--card);border-radius:10px;overflow:hidden}
+  .lr{display:flex;align-items:center;gap:8px;padding:6px 10px;position:relative;font-variant-numeric:tabular-nums}
+  .lr+.lr::before{content:"";position:absolute;top:0;left:10px;right:0;height:.5px;background:var(--line)}
+  .lr .t{width:34px;font-weight:600;color:var(--tint)}
+  .lr .t.lo{color:var(--dim);font-weight:500}
+  .lr .n{flex:1;text-align:right;font-weight:600}
+  .lr .p{width:40px;text-align:right;color:var(--dim);font-size:12.5px}
+  .lr.sub{color:var(--dim);font-size:12.5px;padding-top:6px;padding-bottom:6px}
+  .lr.sub .n{font-weight:500;color:var(--text)}
+  .warn{color:#FF9F0A;font-size:12px;margin:6px 2px 0}
+  .empty{color:var(--dim);font-size:13px;padding:10px;text-align:center}
+
+  /* expanded-only */
+  .tabs{margin-bottom:10px}
+  h3{margin:14px 0 6px 10px;font-size:12px;font-weight:400;text-transform:uppercase;color:var(--dim);letter-spacing:-.05px}
+  .fld{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 10px;position:relative}
+  .fld+.fld::before{content:"";position:absolute;top:0;left:10px;right:0;height:.5px;background:var(--line)}
+  .fld label{flex:1;font-size:15px}
+  .fld input{width:90px;background:none;border:0;color:var(--dim);text-align:right;font:15px -apple-system,system-ui,Roboto,sans-serif}
+  .fld input:focus{outline:none;color:var(--text)}
+  .fld .seg{width:170px}
+  .copy{display:block;width:100%;margin-top:10px;background:var(--tint);color:#000;border:0;border-radius:10px;
+    padding:10px;font:600 15px/1.2 -apple-system,system-ui,Roboto,sans-serif}
+  .note{color:var(--dim);font-size:12.5px;line-height:17px;margin:6px 10px 0}
+
+  .pick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .pick button{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card);border:0;border-radius:10px;
+    color:var(--dim);padding:8px 2px;font:500 12px/1 -apple-system,system-ui,Roboto,sans-serif}
+  .pick button .ic{width:30px;height:30px}
+  .pick button.on{background:var(--card2);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--tint)}
+  .res{display:flex;align-items:center;gap:12px;padding:12px}
+  .res .ic{width:46px;height:46px}
+  .res .k{font-size:12px;color:var(--dim);text-transform:uppercase}
+  .res .v{font:700 22px/1.2 -apple-system,system-ui,Roboto,sans-serif}
+  .res .s{font-size:13px;color:var(--dim);margin-top:2px}
+  .why{padding:0 12px 12px;font-size:14px;color:var(--dim)}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  td,th{padding:7px 10px;text-align:right;font-size:14px}
+  th{font-weight:400;color:var(--dim);font-size:12px}
+  td:first-child,th:first-child{text-align:left}
+  tr+tr td{border-top:.5px solid var(--line)}
+  .hi{color:var(--green);font-weight:700} .lo{color:var(--red)}
+  .c-ground{color:var(--ground)} .c-ranged{color:var(--ranged)} .c-mounted{color:var(--mounted)} .c-siege{color:var(--siege)}
 </style>
 </head>
 <body>
-<nav>
-  <button data-tab="counter" class="on">Counters</button>
-  <button data-tab="layers">Layers</button>
-  <button data-tab="defense">Defense</button>
-</nav>
+<div id="app">
 
-<!-- COUNTERS -->
-<section id="counter" class="on">
-  <h3>Enemy is mostly…</h3>
-  <div class="grid4" id="enemyPick"></div>
-  <div class="card" id="counterOut"></div>
+  <!-- tabs (expanded only) -->
+  <div class="seg tabs xp" id="tabs"></div>
 
-  <h3>Damage multipliers <span class="pill">community data</span></h3>
-  <table id="coefTable"></table>
-  <p class="muted">Attacker (row) vs defender (column). Reported by players and not confirmed by Evony. Only holds when tiers, buffs and debuffs are about equal.</p>
+  <!-- ===== LAYERS (core; this is the compact view) ===== -->
+  <section id="t-layers">
+    <div class="ms">
+      <img class="ic" src="icons/glyph/march.webp" alt="">
+      <div class="grow">
+        <div class="lab" id="msLab">March size</div>
+        <input id="size" type="text" inputmode="numeric" placeholder="0" autocomplete="off">
+      </div>
+      <button class="auto" id="autoBtn"><i></i><span>Auto</span></button>
+    </div>
 
-  <h3>Range &amp; speed (T12)</h3>
-  <table>
-    <tr><th>Type</th><th>Range</th><th>Speed</th></tr>
-    <tr><td class="t-mounted">Mounted</td><td>50</td><td>600</td></tr>
-    <tr><td class="t-ground">Ground</td><td>50</td><td>350</td></tr>
-    <tr><td class="t-ranged">Ranged</td><td>500</td><td>100</td></tr>
-    <tr><td class="t-siege">Siege</td><td>1,867</td><td>75</td></tr>
-  </table>
-</section>
+    <div class="ctl">
+      <div class="seg" id="typeSeg"></div>
+      <div class="step"><button id="tierDn">−</button><span id="tierLbl">T12</span><button id="tierUp">+</button></div>
+    </div>
 
-<!-- LAYERS -->
-<section id="layers">
-  <h3>Main troop type</h3>
-  <div class="grid4" id="typePick"></div>
+    <div class="card" id="layerOut"></div>
+    <div class="warn hide" id="warn"></div>
 
-  <div class="grid2" style="margin-top:10px">
-    <div><label>March size</label><input id="size" type="number" inputmode="numeric" placeholder="e.g. 450000"></div>
-    <div><label>Highest tier</label>
-      <div class="stepper"><button id="tierDn">−</button><span id="tierLbl">T12</span><button id="tierUp">+</button></div></div>
-  </div>
-  <label style="margin-top:10px">Split style</label>
-  <div class="seg" id="profile"></div>
-  <div class="grid2" style="margin-top:10px">
-    <div><label>Lower tiers (% each)</label><input id="lowPct" type="number" inputmode="decimal" step="0.25" value="1"></div>
-    <div><label>Other types, per tier</label><input id="thin" type="number" inputmode="numeric" value="1000"></div>
-  </div>
-  <label style="margin-top:10px">Round to</label>
-  <div class="seg" id="round"></div>
+    <div class="xp">
+      <h3>Settings</h3>
+      <div class="card">
+        <div class="fld"><label>Split</label><div class="seg" id="profile"></div></div>
+        <div class="fld"><label>Lower tiers, % each</label><input id="lowPct" type="number" inputmode="decimal" step="0.25" value="1"></div>
+        <div class="fld"><label>Other types, per tier</label><input id="thin" type="number" inputmode="numeric" value="1000"></div>
+        <div class="fld"><label>Round to</label><div class="seg" id="round"></div></div>
+      </div>
+      <button class="copy" id="copyBtn">Copy layers</button>
+      <p class="note">Splits come from published layering guides. Treat them as a starting point and adjust from your battle reports.</p>
+    </div>
+  </section>
 
-  <div class="card" id="layerOut"><span class="muted">Enter your march size.</span></div>
-</section>
+  <!-- ===== COUNTERS ===== -->
+  <section id="t-counter" class="hide">
+    <h3 style="margin-top:0">Enemy is mostly</h3>
+    <div class="pick" id="enemyPick"></div>
+    <div class="card" id="counterOut" style="margin-top:10px"></div>
+    <h3>Damage multipliers · community data</h3>
+    <div class="card"><table id="coefTable"></table></div>
+    <p class="note">Attacker (row) vs defender (column). Reported by players, not confirmed by Evony. Holds only when tiers, buffs and debuffs are about equal.</p>
+    <h3>Range &amp; speed (T12)</h3>
+    <div class="card"><table>
+      <tr><th>Type</th><th>Range</th><th>Speed</th></tr>
+      <tr><td class="c-mounted">Mounted</td><td>50</td><td>600</td></tr>
+      <tr><td class="c-ground">Ground</td><td>50</td><td>350</td></tr>
+      <tr><td class="c-ranged">Ranged</td><td>500</td><td>100</td></tr>
+      <tr><td class="c-siege">Siege</td><td>1,867</td><td>75</td></tr>
+    </table></div>
+  </section>
 
-<!-- DEFENSE -->
-<section id="defense">
-  <h3>Keep level</h3>
-  <input id="keep" type="number" inputmode="numeric" placeholder="e.g. 31">
-  <div class="card" id="defOut"><span class="muted">Enter your keep level.</span></div>
-  <div class="card muted">
-    Defense layers can be much thicker than offense because your city has no march-size cap.
-    Start with about 1,000 of every tier and type, then thicken. Strong attackers bring huge buffs,
-    so thin layers alone won't hold against them. Check your battle reports and adjust.
-  </div>
-</section>
+  <!-- ===== DEFENSE ===== -->
+  <section id="t-defense" class="hide">
+    <h3 style="margin-top:0">Your keep</h3>
+    <div class="card"><div class="fld"><label>Keep level</label><input id="keep" type="number" inputmode="numeric" placeholder="e.g. 31"></div></div>
+    <h3>Layer per tier, per type</h3>
+    <div class="card"><div class="res"><img class="ic" src="icons/badge/shield.webp" alt="">
+      <div><div class="v" id="defOut">—</div><div class="s">Suggested starting size</div></div></div></div>
+    <p class="note">Defense layers can be much thicker than offense because your city has no march-size cap. Start with about 1,000 of every tier and type, then thicken. Strong attackers bring huge buffs, so thin layers alone won't hold.</p>
+  </section>
+</div>
 
 <script>
-const TYPES = ["ground","ranged","mounted","siege"];
-const NAME = {ground:"Ground",ranged:"Ranged",mounted:"Mounted",siege:"Siege"};
-// Community-reported compatibility coefficients (attacker -> defender), unverified.
-const COEF = {
-  ground: {ground:1,   ranged:1.2, mounted:0.7, siege:1.1},
-  ranged: {ground:0.8, ranged:1,   mounted:1.2, siege:1.1},
-  mounted:{ground:1.2, ranged:0.8, mounted:1,   siege:0.9},
-  siege:  {ground:0.35,ranged:0.4, mounted:0.3, siege:0.5}
-};
-const COUNTER = {
-  ground: {send:"mounted", alt:null, avoid:"ranged",
-    why:"Mounted beats Ground and closes the distance fastest."},
-  ranged: {send:"ground", alt:"siege", avoid:"mounted",
-    why:"Ground beats Ranged. Siege also tends to do well against Ranged from long range."},
-  mounted:{send:"ranged", alt:null, avoid:"ground",
-    why:"Ranged beats Mounted. This is the usual pick against Mounted-heavy cities."},
-  siege:  {send:"mounted", alt:"ground", avoid:null,
-    why:"Siege is weak once enemies close in. Fast close-combat troops (Mounted, then Ground) reach it quickly."}
-};
-// Top-3 tier splits. Guide defaults are normalized from published layering guides.
-const SPLIT = {
-  guide:{ranged:[47,35,18], ground:[57,28,15], mounted:[58,29,13], siege:[57,28,15]},
-  top:  [65,23,12],
-  even: [34,33,33]
-};
-const DEF = [
-  [25,"5,000 – 10,000"],[30,"20,000 – 50,000"],[33,"50,000 – 100,000"],
-  [35,"200,000+"],[99,"500,000 – 1,000,000+"]
-];
+const TYPES=["ground","ranged","mounted","siege"];
+const NAME={ground:"Ground",ranged:"Ranged",mounted:"Mounted",siege:"Siege"};
+const glyph=t=>`<img class="ic" src="icons/glyph/${t}.webp" alt="">`;
+const badge=t=>`<img class="ic" src="icons/badge/${t}.webp" alt="">`;
+const COEF={ground:{ground:1,ranged:1.2,mounted:0.7,siege:1.1},ranged:{ground:0.8,ranged:1,mounted:1.2,siege:1.1},
+  mounted:{ground:1.2,ranged:0.8,mounted:1,siege:0.9},siege:{ground:0.35,ranged:0.4,mounted:0.3,siege:0.5}};
+const COUNTER={
+  ground:{send:"mounted",alt:null,avoid:"ranged",why:"Mounted beats Ground and closes the distance fastest."},
+  ranged:{send:"ground",alt:"siege",avoid:"mounted",why:"Ground beats Ranged. Siege also tends to do well against Ranged from long range."},
+  mounted:{send:"ranged",alt:null,avoid:"ground",why:"Ranged beats Mounted. This is the usual pick against Mounted-heavy cities."},
+  siege:{send:"mounted",alt:"ground",avoid:null,why:"Siege is weak once enemies close in. Fast close-combat troops (Mounted, then Ground) reach it quickly."}};
+const SPLIT={guide:{ranged:[47,35,18],ground:[57,28,15],mounted:[58,29,13],siege:[57,28,15]},top:[65,23,12],even:[34,33,33]};
+const DEF=[[25,"5K – 10K"],[30,"20K – 50K"],[33,"50K – 100K"],[35,"200K+"],[99,"500K – 1M+"]];
 
-/* storage (best effort) */
-const store = {
-  get(k,d){try{const v=localStorage.getItem("mh_"+k);return v===null?d:v}catch(e){return d}},
-  set(k,v){try{localStorage.setItem("mh_"+k,v)}catch(e){}}
-};
-const $ = id => document.getElementById(id);
-const fmt = n => Math.round(n).toLocaleString("en-US");
+const store={get(k,d){try{const v=localStorage.getItem("mo_"+k);return v===null?d:v}catch(e){return d}},
+             set(k,v){try{localStorage.setItem("mo_"+k,v)}catch(e){}}};
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.round(n).toLocaleString("en-US");
+const native=window.Overlay||null;
 
-/* tabs */
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll("nav button,section").forEach(e=>e.classList.remove("on"));
-  b.classList.add("on"); $(b.dataset.tab).classList.add("on"); store.set("tab",b.dataset.tab);
-});
-const savedTab = store.get("tab","counter");
-document.querySelector(`nav button[data-tab="${savedTab}"]`)?.click();
-
-/* type pickers */
-function picker(el, key, def, onPick){
-  let cur = store.get(key, def);
-  TYPES.forEach(t=>{
-    const b=document.createElement("button");
-    b.className="tbtn t-"+t+(t===cur?" on":""); b.textContent=NAME[t]; b.dataset.t=t;
-    b.onclick=()=>{cur=t;store.set(key,t);el.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));onPick(t)};
+/* ---------- mode: compact / expanded (set by the native header) ---------- */
+let expanded=false, tab=store.get("tab","layers");
+function applyMode(){
+  document.querySelectorAll(".xp").forEach(e=>e.classList.toggle("hide",!expanded));
+  ["layers","counter","defense"].forEach(t=>$("t-"+t).classList.toggle("hide",expanded?tab!==t:t!=="layers"));
+  reportHeight();
+}
+window.setMode=m=>{expanded=(m==="expanded");applyMode()};
+function reportHeight(){
+  if(!native||!native.setContentHeight) return;
+  requestAnimationFrame(()=>native.setContentHeight(Math.ceil($("app").getBoundingClientRect().height)));
+}
+function seg(id,opts,cur,onPick){
+  const el=$(id); el.innerHTML="";
+  opts.forEach(([v,html])=>{
+    const b=document.createElement("button"); b.innerHTML=html; b.dataset.v=v;
+    if(v===cur) b.classList.add("on");
+    b.onclick=()=>{el.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); onPick(v)};
     el.appendChild(b);
   });
-  onPick(cur);
-  return ()=>cur;
 }
+seg("tabs",[["layers","Layers"],["counter","Counters"],["defense","Defense"]],tab,v=>{tab=v;store.set("tab",v);applyMode()});
 
-/* counters */
-function renderCounter(e){
-  const c=COUNTER[e];
-  $("counterOut").innerHTML =
-    `<div class="muted">Send</div><div class="big t-${c.send}">${NAME[c.send]}</div>`+
-    (c.alt?`<div class="muted">Also good: <b class="t-${c.alt}">${NAME[c.alt]}</b></div>`:"")+
-    (c.avoid?`<div class="muted">Avoid: <b class="t-${c.avoid}">${NAME[c.avoid]}</b></div>`:"")+
-    `<p style="margin:8px 0 0">${c.why}</p>`;
-  let h=`<tr><th>Atk \\ Def</th>${TYPES.map(t=>`<th class="t-${t}">${NAME[t].slice(0,3)}</th>`).join("")}</tr>`;
-  TYPES.forEach(a=>{
-    h+=`<tr><td class="t-${a}">${NAME[a]}</td>`+TYPES.map(d=>{
-      const v=COEF[a][d], cls=(d===e && v>=1.1)?"hi":(d===e && v<1)?"lo":"";
-      return `<td class="${cls}">${v}</td>`}).join("")+"</tr>";
-  });
-  $("coefTable").innerHTML=h;
-}
-picker($("enemyPick"),"enemy","mounted",renderCounter);
-
-/* layers */
-["size","lowPct","thin"].forEach(id=>{
-  const el=$(id), v=store.get(id,null); if(v!==null) el.value=v;
-  el.addEventListener("input",()=>{store.set(id,el.value);calc()});
-});
-// tier stepper
-let tier=parseInt(store.get("tier","12"),10)||12;
+/* ---------- layers ---------- */
+let main=store.get("main","ranged"), tier=parseInt(store.get("tier","12"),10)||12;
+let prof=store.get("profile","guide"), R=store.get("round","100");
+seg("typeSeg",TYPES.map(t=>[t,glyph(t)]),main,v=>{main=v;store.set("main",v);calc()});
+seg("profile",[["guide","Guide"],["top","Top"],["even","Even"]],prof,v=>{prof=v;store.set("profile",v);calc()});
+seg("round",[["10","10"],["100","100"],["1000","1K"]],R,v=>{R=v;store.set("round",v);calc()});
 function setTier(t){tier=Math.max(1,Math.min(16,t));$("tierLbl").textContent="T"+tier;store.set("tier",tier);calc()}
-$("tierDn").onclick=()=>setTier(tier-1);
-$("tierUp").onclick=()=>setTier(tier+1);
-// segmented controls
-const segVal={};
-function seg(id,opts,def){
-  segVal[id]=store.get(id,def);
-  opts.forEach(([v,label])=>{
-    const b=document.createElement("button");b.textContent=label;b.dataset.v=v;
-    if(v===segVal[id])b.classList.add("on");
-    b.onclick=()=>{segVal[id]=v;store.set(id,v);$(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));calc()};
-    $(id).appendChild(b);
-  });
-}
-seg("profile",[["guide","Guide"],["top","Top-heavy"],["even","Even"]],"guide");
-seg("round",[["10","10"],["100","100"],["1000","1,000"]],"100");
+$("tierDn").onclick=()=>setTier(tier-1); $("tierUp").onclick=()=>setTier(tier+1); $("tierLbl").textContent="T"+tier;
+const sizeVal=()=>parseInt(String($("size").value).replace(/\D/g,""),10)||0;
+function setSize(n){$("size").value=n?fmt(n):"";store.set("size",n||"")}
+["lowPct","thin"].forEach(id=>{const el=$(id),v=store.get(id,null);if(v!==null)el.value=v;
+  el.addEventListener("input",()=>{store.set(id,el.value);calc()})});
+setSize(parseInt(store.get("size","0"),10));
+$("size").addEventListener("input",()=>{setSize(sizeVal());setAutoLabel(false);calc()});
 
-let mainType;
-picker($("typePick"),"main","ranged",t=>{mainType=t;calc()});
-
+let lastRows=[];
 function calc(){
-  if(mainType===undefined||tier===undefined||!segVal.round) return;
-  const S=parseInt($("size").value,10), K=tier;
-  const low=Math.max(0,parseFloat($("lowPct").value)||0)/100;
-  const thin=Math.max(0,parseInt($("thin").value,10)||0);
-  const R=parseInt(segVal.round,10);
-  const out=$("layerOut");
-  if(!S||S<100){out.innerHTML='<span class="muted">Enter your march size.</span>';return}
-  const rnd=n=>Math.floor(n/R)*R;
-
-  const topN=Math.min(3,K);
-  const prof=segVal.profile;
-  let split=(prof==="guide"?SPLIT.guide[mainType]:SPLIT[prof]).slice(0,topN);
+  const S=sizeVal(), K=tier, out=$("layerOut"), warn=$("warn");
+  const low=Math.max(0,parseFloat($("lowPct").value)||0)/100, thin=Math.max(0,parseInt($("thin").value,10)||0), r=parseInt(R,10);
+  warn.classList.add("hide"); lastRows=[];
+  if(!S||S<100){out.innerHTML='<div class="empty">Enter a march size, or tap Auto to read it from your presets.</div>';reportHeight();return}
+  const rnd=n=>Math.floor(n/r)*r;
+  let split=(prof==="guide"?SPLIT.guide[main]:SPLIT[prof]).slice(0,Math.min(3,K));
   const sum=split.reduce((a,b)=>a+b,0); split=split.map(x=>x/sum);
-
-  const lowerTiers=Math.max(0,K-3);
-  const lowEach=rnd(S*low);
-  const thinTotal=thin*3*K;
-  const lowTotal=lowEach*lowerTiers;
-  let main=S-thinTotal-lowTotal;
-  let warn="";
-  if(main<S*0.6) warn="Thin and lower layers are using over 40% of your march. Lower the % per tier or the other-type count.";
-  if(main<=0){out.innerHTML='<div class="warn">Layers are bigger than the march. Reduce the lower-tier % or the other-type count.</div>';return}
-
-  const rows=[];
-  let used=0;
-  split.forEach((p,i)=>{const n=rnd(main*p);rows.push({tier:K-i,n,main:true});used+=n});
-  rows[0].n+=main-used; // remainder to the top tier
-  for(let t=K-3;t>=1;t--) rows.push({tier:t,n:lowEach,main:false});
-
-  let h=`<div class="row"><div><div class="muted">${NAME[mainType]} march</div><div class="big">${fmt(S)}</div></div>`+
-        `<button class="copy" id="copyBtn">Copy</button></div>`+
-        `<table style="margin-top:8px"><tr><th>Layer</th><th>Troops</th><th>%</th><th style="width:30%"></th></tr>`;
-  rows.forEach(r=>{
-    if(!r.n) return;
-    const pct=r.n/S*100;
-    h+=`<tr><td class="t-${mainType}${r.main?"":" muted"}">T${r.tier} ${NAME[mainType]}</td><td>${fmt(r.n)}</td><td>${pct.toFixed(1)}</td>`+
-       `<td><div class="bar" style="width:${Math.min(100,pct*1.6)}%"></div></td></tr>`;
-  });
-  if(thin){
-    const others=TYPES.filter(t=>t!==mainType).map(t=>NAME[t]).join(", ");
-    h+=`<tr><td colspan="2" class="muted">${others} — T1–T${K}</td><td colspan="2">${fmt(thin)} each</td></tr>`+
-       `<tr><td colspan="2" class="muted">Other types total</td><td colspan="2">${fmt(thinTotal)}</td></tr>`;
-  }
-  h+="</table>";
-  if(warn) h+=`<div class="warn">${warn}</div>`;
-  h+=`<p class="muted" style="margin:8px 0 0">A starting point. Adjust after reading your battle reports.</p>`;
+  const lowerN=Math.max(0,K-3), lowEach=rnd(S*low), thinTotal=thin*3*K, mainPool=S-thinTotal-lowEach*lowerN;
+  if(mainPool<=0){out.innerHTML='<div class="empty">Layers are bigger than the march. Lower the % or other-type count.</div>';reportHeight();return}
+  if(mainPool<S*0.6){warn.textContent="Lower and other-type layers use over 40% of the march.";warn.classList.remove("hide")}
+  const rows=[]; let used=0;
+  split.forEach((p,i)=>{const n=rnd(mainPool*p);rows.push({t:K-i,n});used+=n}); rows[0].n+=mainPool-used;
+  let h=rows.map(x=>`<div class="lr"><span class="t">T${x.t}</span><span class="n">${fmt(x.n)}</span><span class="p">${(x.n/S*100).toFixed(1)}%</span></div>`).join("");
+  if(lowerN&&lowEach) h+=`<div class="lr sub"><span>T1–T${K-3} ${NAME[main]}</span><span class="n">${fmt(lowEach)} each</span></div>`;
+  if(thin) h+=`<div class="lr sub"><span>Other types T1–T${K}</span><span class="n">${fmt(thin)} each</span></div>`;
   out.innerHTML=h;
-
-  $("copyBtn").onclick=()=>{
-    const lines=rows.filter(r=>r.n).map(r=>`T${r.tier} ${NAME[mainType]}: ${fmt(r.n)}`);
-    if(thin) lines.push(`Other types T1-T${K}: ${fmt(thin)} each`);
-    const txt=`${NAME[mainType]} march ${fmt(S)}\n`+lines.join("\n");
-    const done=()=>{$("copyBtn").textContent="Copied";setTimeout(()=>{const b=$("copyBtn");if(b)b.textContent="Copy"},1200)};
-    if(window.Overlay&&Overlay.copy){Overlay.copy(txt);done();return}
-    try{navigator.clipboard.writeText(txt).then(done,done)}catch(e){done()}
-  };
+  lastRows=rows.map(x=>`T${x.t} ${NAME[main]}: ${fmt(x.n)}`);
+  if(lowerN&&lowEach) lastRows.push(`T1-T${K-3} ${NAME[main]}: ${fmt(lowEach)} each`);
+  if(thin) lastRows.push(`Other types T1-T${K}: ${fmt(thin)} each`);
+  reportHeight();
 }
+$("copyBtn").onclick=()=>{
+  if(!lastRows.length) return;
+  const txt=`${NAME[main]} march ${fmt(sizeVal())}\n`+lastRows.join("\n");
+  if(native&&native.copy) native.copy(txt); else try{navigator.clipboard.writeText(txt)}catch(e){}
+  $("copyBtn").textContent="Copied"; setTimeout(()=>$("copyBtn").textContent="Copy layers",1200);
+};
 
-/* defense */
-const keepEl=$("keep"); keepEl.value=store.get("keep","");
-function defCalc(){
-  store.set("keep",keepEl.value);
-  const k=parseInt(keepEl.value,10);
-  if(!k){$("defOut").innerHTML='<span class="muted">Enter your keep level.</span>';return}
-  const row=DEF.find(r=>k<=r[0]);
-  $("defOut").innerHTML=`<div class="muted">Suggested layer per tier, per type</div><div class="big">${row[1]}</div>`;
+/* ---------- auto-read (screen reading is done natively) ---------- */
+let autoOn=false;
+function setAutoLabel(fromScreen){ $("msLab").textContent=fromScreen?"March size · read from screen":"March size"; }
+function paintAuto(){ $("autoBtn").classList.toggle("on",autoOn); }
+$("autoBtn").onclick=()=>{
+  if(!native||!native.toggleAutoRead){ $("msLab").textContent="Auto-read works in the Android app"; return; }
+  native.toggleAutoRead();
+};
+window.onAutoState=on=>{autoOn=!!on;paintAuto();if(!autoOn)setAutoLabel(false)};
+window.onMarchRead=(max)=>{
+  max=parseInt(max,10); if(!max) return;
+  if(sizeVal()!==max){ setSize(max); calc();
+    const b=$("autoBtn"); b.classList.remove("flash"); void b.offsetWidth; b.classList.add("flash"); }
+  setAutoLabel(true);
+};
+if(native&&native.isAutoRead){ autoOn=native.isAutoRead(); paintAuto(); }
+
+/* ---------- counters ---------- */
+let enemy=store.get("enemy","mounted");
+function renderCounter(){
+  const c=COUNTER[enemy];
+  $("counterOut").innerHTML=`<div class="res">${badge(c.send)}<div><div class="k">Send</div><div class="v c-${c.send}">${NAME[c.send]}</div>`+
+    (c.alt?`<div class="s">Also good: ${NAME[c.alt]}</div>`:"")+(c.avoid?`<div class="s">Avoid: ${NAME[c.avoid]}</div>`:"")+
+    `</div></div><div class="why">${c.why}</div>`;
+  let h=`<tr><th>Atk \\ Def</th>${TYPES.map(t=>`<th>${NAME[t].slice(0,3)}</th>`).join("")}</tr>`;
+  TYPES.forEach(a=>{h+=`<tr><td class="c-${a}">${NAME[a]}</td>`+TYPES.map(d=>{const v=COEF[a][d];
+    const cls=d===enemy&&v>=1.1?"hi":d===enemy&&v<1?"lo":"";return `<td class="${cls}">${v}</td>`}).join("")+"</tr>"});
+  $("coefTable").innerHTML=h; reportHeight();
 }
-keepEl.addEventListener("input",defCalc); defCalc();
-calc();
+(function(){const el=$("enemyPick");TYPES.forEach(t=>{const b=document.createElement("button");b.innerHTML=glyph(t)+NAME[t];
+  if(t===enemy)b.classList.add("on");b.onclick=()=>{enemy=t;store.set("enemy",t);el.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));renderCounter()};el.appendChild(b)})})();
+
+/* ---------- defense ---------- */
+$("keep").value=store.get("keep","");
+function defCalc(){store.set("keep",$("keep").value);const k=parseInt($("keep").value,10);
+  $("defOut").textContent=k?DEF.find(r=>k<=r[0])[1]:"—"}
+$("keep").addEventListener("input",defCalc);
+
+renderCounter(); defCalc(); calc(); applyMode();
+window.addEventListener("load",reportHeight);
+document.querySelectorAll("img").forEach(i=>i.addEventListener("load",reportHeight));
 </script>
 </body>
 </html>

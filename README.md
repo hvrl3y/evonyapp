@@ -1,8 +1,11 @@
-# March Helper (Evony overlay)
+# Marchitect Overlay (Evony)
 
-A floating bubble for Android that opens a troop-counter chart and a march
-layering calculator on top of Evony: The King's Return. It only shows
-information. It doesn't read the screen and it doesn't tap the game.
+The sister app to Marchitect: a floating bubble for Android that opens a
+compact layering calculator and troop-counter chart on top of Evony: The
+King's Return. With **Auto** on, it reads your march size from the
+"selected / max" troop counter on the Create Presets screen and updates the
+layers each time you switch presets. Reading happens on the phone with
+Google ML Kit's offline text recognizer. The app never taps the game.
 
 ## What's inside
 
@@ -43,12 +46,11 @@ You can also open this folder in Android Studio and press Run.
 - Layer splits come from published TKR layering guides (for example, a
   1M Ranged march at roughly 400K / 300K / 150K across the top three tiers).
   Treat them as starting points.
-- Evony's terms ban unauthorized third-party software. This app is a
-  passive reference panel, which is the lowest-risk kind of tool, but
-  there's still some risk.
+- Evony's terms ban unauthorized third-party software. Auto-read only looks
+  at the screen (it never taps or changes the game), but screen reading is a
+  gray area, so use it at your own risk.
 
 ## Ideas for later
 
 - Saved presets (PvP Ranged, Ground, Mounted) with one-tap recall.
-- An OCR "read my march size" button. This carries higher terms-of-service
-  risk.
+- Detect the main troop type and highest tier from the preset screen.
