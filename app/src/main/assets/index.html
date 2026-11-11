@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>March Helper</title>
+<style>
+  :root{
+    --bg:#12151c; --panel:#1b202a; --line:#2a313e; --text:#e8ebf0; --dim:#8b94a5;
+    --gold:#e3b04b; --good:#4fc28a; --bad:#e2675b;
+    --ground:#c98a4b; --ranged:#4fa3e0; --mounted:#b07de8; --siege:#9aa3ad;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.35 system-ui,-apple-system,Roboto,sans-serif}
+  body{padding-bottom:12px}
+  nav{display:flex;position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:2}
+  nav button{flex:1;background:none;border:0;color:var(--dim);padding:10px 4px;font:600 13px system-ui;border-bottom:2px solid transparent}
+  nav button.on{color:var(--gold);border-color:var(--gold)}
+  section{display:none;padding:10px}
+  section.on{display:block}
+  h3{margin:12px 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tbtn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:9px 2px;font:600 12px system-ui}
+  .tbtn.on{border-color:currentColor;background:#232a36}
+  .t-ground{color:var(--ground)} .t-ranged{color:var(--ranged)} .t-mounted{color:var(--mounted)} .t-siege{color:var(--siege)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px}
+  .big{font-size:20px;font-weight:700}
+  .muted{color:var(--dim);font-size:12px}
+  label{display:block;font-size:12px;color:var(--dim);margin-bottom:3px}
+  input,select{width:100%;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px;font:15px system-ui}
+  input:focus,select:focus{outline:none;border-color:var(--gold)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:right}
+  td:first-child,th:first-child{text-align:left}
+  th{color:var(--dim);font-weight:600;font-size:11px}
+  .hi{color:var(--good);font-weight:700} .lo{color:var(--bad)}
+  .warn{color:var(--bad);font-size:12px;margin-top:6px}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .copy{background:var(--gold);color:#1b1b1b;border:0;border-radius:8px;padding:8px 12px;font:700 13px system-ui}
+  .pill{display:inline-block;padding:1px 7px;border-radius:99px;background:#232a36;font-size:11px;color:var(--dim)}
+  .bar{height:6px;border-radius:3px;background:var(--gold);opacity:.85}
+  body{-webkit-user-select:none;user-select:none}
+  input{-webkit-user-select:text;user-select:text}
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{flex:1;background:var(--panel);color:var(--dim);border:0;border-right:1px solid var(--line);padding:9px 2px;font:600 12px system-ui}
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:#2b3240;color:var(--gold)}
+  .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--panel);height:40px}
+  .stepper button{width:40px;height:100%;background:none;border:0;color:var(--gold);font:700 20px system-ui}
+  .stepper span{flex:1;text-align:center;font:600 15px system-ui}
+</style>
+</head>
+<body>
+<nav>
+  <button data-tab="counter" class="on">Counters</button>
+  <button data-tab="layers">Layers</button>
+  <button data-tab="defense">Defense</button>
+</nav>
+
+<!-- COUNTERS -->
+<section id="counter" class="on">
+  <h3>Enemy is mostly…</h3>
+  <div class="grid4" id="enemyPick"></div>
+  <div class="card" id="counterOut"></div>
+
+  <h3>Damage multipliers <span class="pill">community data</span></h3>
+  <table id="coefTable"></table>
+  <p class="muted">Attacker (row) vs defender (column). Reported by players and not confirmed by Evony. Only holds when tiers, buffs and debuffs are about equal.</p>
+
+  <h3>Range &amp; speed (T12)</h3>
+  <table>
+    <tr><th>Type</th><th>Range</th><th>Speed</th></tr>
+    <tr><td class="t-mounted">Mounted</td><td>50</td><td>600</td></tr>
+    <tr><td class="t-ground">Ground</td><td>50</td><td>350</td></tr>
+    <tr><td class="t-ranged">Ranged</td><td>500</td><td>100</td></tr>
+    <tr><td class="t-siege">Siege</td><td>1,867</td><td>75</td></tr>
+  </table>
+</section>
+
+<!-- LAYERS -->
+<section id="layers">
+  <h3>Main troop type</h3>
+  <div class="grid4" id="typePick"></div>
+
+  <div class="grid2" style="margin-top:10px">
+    <div><label>March size</label><input id="size" type="number" inputmode="numeric" placeholder="e.g. 450000"></div>
+    <div><label>Highest tier</label>
+      <div class="stepper"><button id="tierDn">−</button><span id="tierLbl">T12</span><button id="tierUp">+</button></div></div>
+  </div>
+  <label style="margin-top:10px">Split style</label>
+  <div class="seg" id="profile"></div>
+  <div class="grid2" style="margin-top:10px">
+    <div><label>Lower tiers (% each)</label><input id="lowPct" type="number" inputmode="decimal" step="0.25" value="1"></div>
+    <div><label>Other types, per tier</label><input id="thin" type="number" inputmode="numeric" value="1000"></div>
+  </div>
+  <label style="margin-top:10px">Round to</label>
+  <div class="seg" id="round"></div>
+
+  <div class="card" id="layerOut"><span class="muted">Enter your march size.</span></div>
+</section>
+
+<!-- DEFENSE -->
+<section id="defense">
+  <h3>Keep level</h3>
+  <input id="keep" type="number" inputmode="numeric" placeholder="e.g. 31">
+  <div class="card" id="defOut"><span class="muted">Enter your keep level.</span></div>
+  <div class="card muted">
+    Defense layers can be much thicker than offense because your city has no march-size cap.
+    Start with about 1,000 of every tier and type, then thicken. Strong attackers bring huge buffs,
+    so thin layers alone won't hold against them. Check your battle reports and adjust.
+  </div>
+</section>
+
+<script>
+const TYPES = ["ground","ranged","mounted","siege"];
+const NAME = {ground:"Ground",ranged:"Ranged",mounted:"Mounted",siege:"Siege"};
+// Community-reported compatibility coefficients (attacker -> defender), unverified.
+const COEF = {
+  ground: {ground:1,   ranged:1.2, mounted:0.7, siege:1.1},
+  ranged: {ground:0.8, ranged:1,   mounted:1.2, siege:1.1},
+  mounted:{ground:1.2, ranged:0.8, mounted:1,   siege:0.9},
+  siege:  {ground:0.35,ranged:0.4, mounted:0.3, siege:0.5}
+};
+const COUNTER = {
+  ground: {send:"mounted", alt:null, avoid:"ranged",
+    why:"Mounted beats Ground and closes the distance fastest."},
+  ranged: {send:"ground", alt:"siege", avoid:"mounted",
+    why:"Ground beats Ranged. Siege also tends to do well against Ranged from long range."},
+  mounted:{send:"ranged", alt:null, avoid:"ground",
+    why:"Ranged beats Mounted. This is the usual pick against Mounted-heavy cities."},
+  siege:  {send:"mounted", alt:"ground", avoid:null,
+    why:"Siege is weak once enemies close in. Fast close-combat troops (Mounted, then Ground) reach it quickly."}
+};
+// Top-3 tier splits. Guide defaults are normalized from published layering guides.
+const SPLIT = {
+  guide:{ranged:[47,35,18], ground:[57,28,15], mounted:[58,29,13], siege:[57,28,15]},
+  top:  [65,23,12],
+  even: [34,33,33]
+};
+const DEF = [
+  [25,"5,000 – 10,000"],[30,"20,000 – 50,000"],[33,"50,000 – 100,000"],
+  [35,"200,000+"],[99,"500,000 – 1,000,000+"]
+];
+
+/* storage (best effort) */
+const store = {
+  get(k,d){try{const v=localStorage.getItem("mh_"+k);return v===null?d:v}catch(e){return d}},
+  set(k,v){try{localStorage.setItem("mh_"+k,v)}catch(e){}}
+};
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString("en-US");
+
+/* tabs */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button,section").forEach(e=>e.classList.remove("on"));
+  b.classList.add("on"); $(b.dataset.tab).classList.add("on"); store.set("tab",b.dataset.tab);
+});
+const savedTab = store.get("tab","counter");
+document.querySelector(`nav button[data-tab="${savedTab}"]`)?.click();
+
+/* type pickers */
+function picker(el, key, def, onPick){
+  let cur = store.get(key, def);
+  TYPES.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="tbtn t-"+t+(t===cur?" on":""); b.textContent=NAME[t]; b.dataset.t=t;
+    b.onclick=()=>{cur=t;store.set(key,t);el.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));onPick(t)};
+    el.appendChild(b);
+  });
+  onPick(cur);
+  return ()=>cur;
+}
+
+/* counters */
+function renderCounter(e){
+  const c=COUNTER[e];
+  $("counterOut").innerHTML =
+    `<div class="muted">Send</div><div class="big t-${c.send}">${NAME[c.send]}</div>`+
+    (c.alt?`<div class="muted">Also good: <b class="t-${c.alt}">${NAME[c.alt]}</b></div>`:"")+
+    (c.avoid?`<div class="muted">Avoid: <b class="t-${c.avoid}">${NAME[c.avoid]}</b></div>`:"")+
+    `<p style="margin:8px 0 0">${c.why}</p>`;
+  let h=`<tr><th>Atk \\ Def</th>${TYPES.map(t=>`<th class="t-${t}">${NAME[t].slice(0,3)}</th>`).join("")}</tr>`;
+  TYPES.forEach(a=>{
+    h+=`<tr><td class="t-${a}">${NAME[a]}</td>`+TYPES.map(d=>{
+      const v=COEF[a][d], cls=(d===e && v>=1.1)?"hi":(d===e && v<1)?"lo":"";
+      return `<td class="${cls}">${v}</td>`}).join("")+"</tr>";
+  });
+  $("coefTable").innerHTML=h;
+}
+picker($("enemyPick"),"enemy","mounted",renderCounter);
+
+/* layers */
+["size","lowPct","thin"].forEach(id=>{
+  const el=$(id), v=store.get(id,null); if(v!==null) el.value=v;
+  el.addEventListener("input",()=>{store.set(id,el.value);calc()});
+});
+// tier stepper
+let tier=parseInt(store.get("tier","12"),10)||12;
+function setTier(t){tier=Math.max(1,Math.min(16,t));$("tierLbl").textContent="T"+tier;store.set("tier",tier);calc()}
+$("tierDn").onclick=()=>setTier(tier-1);
+$("tierUp").onclick=()=>setTier(tier+1);
+// segmented controls
+const segVal={};
+function seg(id,opts,def){
+  segVal[id]=store.get(id,def);
+  opts.forEach(([v,label])=>{
+    const b=document.createElement("button");b.textContent=label;b.dataset.v=v;
+    if(v===segVal[id])b.classList.add("on");
+    b.onclick=()=>{segVal[id]=v;store.set(id,v);$(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));calc()};
+    $(id).appendChild(b);
+  });
+}
+seg("profile",[["guide","Guide"],["top","Top-heavy"],["even","Even"]],"guide");
+seg("round",[["10","10"],["100","100"],["1000","1,000"]],"100");
+
+let mainType;
+picker($("typePick"),"main","ranged",t=>{mainType=t;calc()});
+
+function calc(){
+  if(mainType===undefined||tier===undefined||!segVal.round) return;
+  const S=parseInt($("size").value,10), K=tier;
+  const low=Math.max(0,parseFloat($("lowPct").value)||0)/100;
+  const thin=Math.max(0,parseInt($("thin").value,10)||0);
+  const R=parseInt(segVal.round,10);
+  const out=$("layerOut");
+  if(!S||S<100){out.innerHTML='<span class="muted">Enter your march size.</span>';return}
+  const rnd=n=>Math.floor(n/R)*R;
+
+  const topN=Math.min(3,K);
+  const prof=segVal.profile;
+  let split=(prof==="guide"?SPLIT.guide[mainType]:SPLIT[prof]).slice(0,topN);
+  const sum=split.reduce((a,b)=>a+b,0); split=split.map(x=>x/sum);
+
+  const lowerTiers=Math.max(0,K-3);
+  const lowEach=rnd(S*low);
+  const thinTotal=thin*3*K;
+  const lowTotal=lowEach*lowerTiers;
+  let main=S-thinTotal-lowTotal;
+  let warn="";
+  if(main<S*0.6) warn="Thin and lower layers are using over 40% of your march. Lower the % per tier or the other-type count.";
+  if(main<=0){out.innerHTML='<div class="warn">Layers are bigger than the march. Reduce the lower-tier % or the other-type count.</div>';return}
+
+  const rows=[];
+  let used=0;
+  split.forEach((p,i)=>{const n=rnd(main*p);rows.push({tier:K-i,n,main:true});used+=n});
+  rows[0].n+=main-used; // remainder to the top tier
+  for(let t=K-3;t>=1;t--) rows.push({tier:t,n:lowEach,main:false});
+
+  let h=`<div class="row"><div><div class="muted">${NAME[mainType]} march</div><div class="big">${fmt(S)}</div></div>`+
+        `<button class="copy" id="copyBtn">Copy</button></div>`+
+        `<table style="margin-top:8px"><tr><th>Layer</th><th>Troops</th><th>%</th><th style="width:30%"></th></tr>`;
+  rows.forEach(r=>{
+    if(!r.n) return;
+    const pct=r.n/S*100;
+    h+=`<tr><td class="t-${mainType}${r.main?"":" muted"}">T${r.tier} ${NAME[mainType]}</td><td>${fmt(r.n)}</td><td>${pct.toFixed(1)}</td>`+
+       `<td><div class="bar" style="width:${Math.min(100,pct*1.6)}%"></div></td></tr>`;
+  });
+  if(thin){
+    const others=TYPES.filter(t=>t!==mainType).map(t=>NAME[t]).join(", ");
+    h+=`<tr><td colspan="2" class="muted">${others} — T1–T${K}</td><td colspan="2">${fmt(thin)} each</td></tr>`+
+       `<tr><td colspan="2" class="muted">Other types total</td><td colspan="2">${fmt(thinTotal)}</td></tr>`;
+  }
+  h+="</table>";
+  if(warn) h+=`<div class="warn">${warn}</div>`;
+  h+=`<p class="muted" style="margin:8px 0 0">A starting point. Adjust after reading your battle reports.</p>`;
+  out.innerHTML=h;
+
+  $("copyBtn").onclick=()=>{
+    const lines=rows.filter(r=>r.n).map(r=>`T${r.tier} ${NAME[mainType]}: ${fmt(r.n)}`);
+    if(thin) lines.push(`Other types T1-T${K}: ${fmt(thin)} each`);
+    const txt=`${NAME[mainType]} march ${fmt(S)}\n`+lines.join("\n");
+    const done=()=>{$("copyBtn").textContent="Copied";setTimeout(()=>{const b=$("copyBtn");if(b)b.textContent="Copy"},1200)};
+    if(window.Overlay&&Overlay.copy){Overlay.copy(txt);done();return}
+    try{navigator.clipboard.writeText(txt).then(done,done)}catch(e){done()}
+  };
+}
+
+/* defense */
+const keepEl=$("keep"); keepEl.value=store.get("keep","");
+function defCalc(){
+  store.set("keep",keepEl.value);
+  const k=parseInt(keepEl.value,10);
+  if(!k){$("defOut").innerHTML='<span class="muted">Enter your keep level.</span>';return}
+  const row=DEF.find(r=>k<=r[0]);
+  $("defOut").innerHTML=`<div class="muted">Suggested layer per tier, per type</div><div class="big">${row[1]}</div>`;
+}
+keepEl.addEventListener("input",defCalc); defCalc();
+calc();
+</script>
+</body>
+</html>
