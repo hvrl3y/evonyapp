@@ -180,6 +180,10 @@
   .hi{color:var(--green);font-weight:700} .lo{color:var(--red)}
   .why{font-size:12px;color:var(--dim);margin:5px 6px 0}
 .tb{display:inline-block;min-width:13px;padding:0 3px;margin-right:5px;border-radius:4px;font-size:10px;font-weight:700;text-align:center;color:#000;line-height:14px}.tb.tS{background:#F2B544}.tb.tA{background:#30D158}.tb.tB{background:#0A84FF}.tb.tC{background:#8E8E93;color:#fff}.tb.tD{background:#48484A;color:#fff}
+  .mini{border:0;background:var(--fill2);color:var(--tint);border-radius:6px;padding:3px 7px;margin-left:4px;font:600 11px/1.2 -apple-system,system-ui,Roboto,sans-serif}
+  .bi input.ed{outline:1px dashed var(--tint)}
+  .fld.nm input{width:100%;text-align:left;color:var(--text);background:var(--fill2);border-radius:6px;padding:6px 8px}
+  .lr .z{color:var(--dim);font-size:11px}
 </style>
 </head>
 <body>
@@ -213,8 +217,9 @@
     </div>
   </section>
 
-  <!-- ===== MUSTER ===== -->
-  <section id="v-muster" class="hide">
+  <!-- ===== MATCHUP (your march vs the scouted target) ===== -->
+  <section id="v-matchup" class="hide">
+    <div id="matchOut2"></div>
     <div class="mh">
       <img class="ic" src="icons/glyph/crown.webp" alt="">
       <div class="grow"><b id="muTitle">Your march</b><div class="sub" id="muSub"></div></div>
@@ -226,13 +231,54 @@
       <div class="bi"><span>Buffs</span><input id="bA" inputmode="numeric"><input id="bD" inputmode="numeric"><input id="bH" inputmode="numeric"></div>
       <div class="bi"><span>Your debuffs</span><input id="dA" inputmode="numeric"><input id="dD" inputmode="numeric"><input id="dH" inputmode="numeric"></div>
     </div>
-    <button class="pull" id="pullBtn">Use Marchitect's best pair</button>
+    <button class="pull" id="pullBtn">Use Marchitect's best pair + saved buffs</button>
     <div class="x">
       <h3>All troop types</h3>
       <div class="card" id="muAll"></div>
       <h3>Your troops</h3>
       <div id="muTroops"></div>
       <p class="note">Buffs are in %, as the game shows them (e.g. 3130 for +3130%). "Your debuffs" are what your generals put on the enemy.</p>
+    </div>
+  </section>
+
+  <!-- ===== BUFFS (record: Monarch Detail) ===== -->
+  <section id="v-buffs" class="hide">
+    <div class="mh">
+      <img class="ic" src="icons/badge/buff.webp" alt="">
+      <div class="grow"><b id="bfTitle">Your buffs</b><div class="sub" id="bfSub"></div></div>
+    </div>
+    <button class="scan" id="bfScan"></button>
+    <div class="card" id="bfSum"></div>
+    <div class="x">
+      <div class="ctl"><div class="seg" id="bfType"></div></div>
+      <div class="card" id="bfGrid"></div>
+      <div class="card" id="bfCap"></div>
+      <div class="fld nm"><input id="bfName" type="text" placeholder="Name, e.g. War setup" autocomplete="off"></div>
+      <button class="copy" id="bfSave">Save &amp; use in Marchitect</button>
+      <h3>Saved</h3>
+      <div class="card" id="bfList"></div>
+      <p class="note">Monarch → Detail → Military. Tap Scan, then scroll slowly to the bottom. This is everything except your generals; Marchitect adds the generals on top, like the Xwing sheets. Fix any value by tapping it.</p>
+    </div>
+  </section>
+
+  <!-- ===== REPORTS (record: battle reports) ===== -->
+  <section id="v-reports" class="hide">
+    <div class="mh">
+      <img class="ic" src="icons/badge/daily.webp" alt="">
+      <div class="grow"><b id="rpTitle">Battle report</b><div class="sub" id="rpSub"></div></div>
+    </div>
+    <button class="scan" id="rpScan"></button>
+    <div class="card" id="rpSum"></div>
+    <div class="x">
+      <h3>Debuffs</h3>
+      <div class="card" id="rpDeb"></div>
+      <h3>Vs your saved buffs</h3>
+      <div class="ctl"><div class="seg" id="rpCtx"></div></div>
+      <div class="card" id="rpCmp"></div>
+      <button class="copy" id="rpSave">Save report</button>
+      <h3>Saved reports</h3>
+      <div class="card" id="rpList"></div>
+      <p class="note">Open a report's Troop Buff tab, tap Scan and scroll slowly. Left column = you, right = them. Reports include that march's generals and situation, so they're the real totals for that fight. Matchup uses their buffs when a scout report doesn't have them.</p>
     </div>
   </section>
 
@@ -280,16 +326,19 @@ const short=n=>n>=1e9?sig(n/1e9)+"B":n>=1e6?sig(n/1e6)+"M":n>=1e3?sig(n/1e3)+"K"
 const native=window.Overlay||null;
 
 /* ---------- view: layers / counter, compact / expanded (set by native) ---------- */
-let view=["scout","muster","generals"].includes(store.get("view","layers"))?store.get("view","layers"):"layers", expanded=false;
+const VIEWS=["scout","matchup","buffs","reports","generals"];
+let view=(v=>v==="muster"?"matchup":v)(store.get("view","layers")); if(!VIEWS.includes(view)) view="layers"; let expanded=false;
 function apply(){
   $("v-layers").classList.toggle("hide",view!=="layers");
   $("v-scout").classList.toggle("hide",view!=="scout");
-  $("v-muster").classList.toggle("hide",view!=="muster");
+  $("v-matchup").classList.toggle("hide",view!=="matchup");
+  $("v-buffs").classList.toggle("hide",view!=="buffs");
+  $("v-reports").classList.toggle("hide",view!=="reports");
   $("v-generals").classList.toggle("hide",view!=="generals");
   document.querySelectorAll(".x").forEach(e=>e.classList.toggle("hide",!expanded));
   reportHeight();
 }
-window.setView=(v,exp)=>{view=["scout","muster","generals"].includes(v)?v:"layers";expanded=!!exp;store.set("view",view);apply();renderScout();renderMuster();renderGenerals()};
+window.setView=(v,exp)=>{view=VIEWS.includes(v)?v:"layers";expanded=!!exp;store.set("view",view);apply();renderScout();renderMuster();renderMatchup();renderGenerals();renderBuffs();renderReports()};
 function reportHeight(){
   if(!native||!native.setContentHeight) return;
   requestAnimationFrame(()=>native.setContentHeight(Math.ceil($("app").getBoundingClientRect().height)));
@@ -444,12 +493,13 @@ function matchup(send){
   if(!scout||!scout.e||!scout.e.length) return null;
   const es=scout.e, st=scout.stats||{}, top=Math.max(...es.map(x=>x.r)), topS=sums(es.filter(x=>x.r===top));
   const their=enemyPick||mainOf(topS); if(!their) return null;
-  const tb=[0,1,2].map(i=>st[`b|${their}|${i}`]);
+  const RK=["attack","defense","hp"], rv=rp&&rp.v||{};
+  const tb=[0,1,2].map(i=>st[`b|${their}|${i}`]!=null?st[`b|${their}|${i}`]:rv[`R.buff.${their}.${RK[i]}`]);
   const mb=myBuffs(send), march=sizeVal();
-  const need=[]; if(!mb) need.push("your buffs (Muster)"); if(!march) need.push("your march size");
-  if(tb.some(v=>v==null)) need.push("their buffs (open the Troop Buff tab)");
+  const need=[]; if(!mb) need.push("your buffs (Matchup)"); if(!march) need.push("your march size");
+  if(tb.some(v=>v==null)) need.push("their buffs (scout Troop Buff tab, or scan a battle report)");
   if(need.length) return {need,their,top};
-  const dOnMe=[0,1,2].map(i=>Math.abs(st[`d|${send}|${i}`]||0));
+  const dOnMe=[0,1,2].map(i=>Math.abs(st[`d|${send}|${i}`]!=null?st[`d|${send}|${i}`]:(rv[`R.debuff.${send}.${RK[i]}`]||0)));
   const myD=myDebs(send);
   const res=simulate({type:send,tier,count:march,atk:mb.atk,def:mb.def,hp:mb.hp},
     {type:their,tier:top,count:tsum(topS),atk:tb[0],def:tb[1],hp:tb[2]},
@@ -459,7 +509,8 @@ function matchup(send){
   return {verdict,keep,theirLeft,their,top,count:tsum(topS),rounds:res.rounds};
 }
 function renderMatchup(){
-  const el=$("matchOut"); if(!scout||!scout.e||!scout.e.length){el.innerHTML="";return}
+  const el={set innerHTML(h){ $("matchOut").innerHTML=h; $("matchOut2").innerHTML=h||(view==="matchup"?`<div class="mu"><div class="k">Matchup</div><div class="need">Open a scout report (Scout) to see win / loss here.</div></div>`:""); }};
+  if(!scout||!scout.e||!scout.e.length){el.innerHTML="";return}
   const es=scout.e, top=Math.max(...es.map(x=>x.r)), topS=sums(es.filter(x=>x.r===top));
   const their=enemyPick||mainOf(topS); const send=their?COUNTER[their].send:main;
   const m=matchup(send); if(!m){el.innerHTML="";return}
@@ -470,7 +521,7 @@ function renderMatchup(){
     h=`<div class="mu ${m.verdict}"><div class="k">${NAME[send]} vs T${m.top}</div><div class="v">${lbl[m.verdict]}</div>
       <div class="s">${m.verdict==="win"?`you keep ${Math.round(m.keep*100)}%`:m.verdict==="loss"?`they keep ${Math.round(m.theirLeft*100)}%`:`${Math.round(m.keep*100)}% vs ${Math.round(m.theirLeft*100)}% left`}</div></div>`;
   } else {
-    const rows=TYPES.map(t=>{const r=matchup(t); if(!r||r.need) return `<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td><td colspan="2" class="z">set buffs in Muster</td></tr>`;
+    const rows=TYPES.map(t=>{const r=matchup(t); if(!r||r.need) return `<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td><td colspan="2" class="z">set buffs in Matchup</td></tr>`;
       return `<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td><td class="${r.verdict==="win"?"p":r.verdict==="loss"?"m":""}">${lbl[r.verdict]}</td><td>${Math.round(r.keep*100)}% / ${Math.round(r.theirLeft*100)}%</td></tr>`}).join("");
     h=`<h3>Matchup · your ${short(sizeVal())} march vs their T${m.top} (${short(m.count)})</h3>
       <div class="card"><table class="bt"><tr><th>You send</th><th>Result</th><th>You / them left</th></tr>${rows}</table></div>
@@ -639,7 +690,100 @@ setInterval(()=>{ if(view==="scout"&&scout) renderScout(); },4000);
 
 if(native&&native.isAutoRead){ autoOn=native.isAutoRead(); }
 if(!Object.keys(mu.buffs).length) pullFromApp(true);
-paintAuto(); calc(); renderScout(); renderMuster(); renderGenerals(); apply();
+
+/* ================= BUFFS (record: Monarch Detail → saved profiles used by Marchitect) ================= */
+const BCTX=[["basic","Basic"],["attacking","Attacking"],["incity","In city"],["reinforcing","Reinforce"],["single","Flat"]];
+const BST=[["attack","Atk"],["defense","Def"],["hp","HP"]];
+let bf={v:{},edit:{}}; try{bf=Object.assign(bf,JSON.parse(store.get("buffDraft","{}")))}catch(e){}
+let bScanning=false, bfType=store.get("bfType","ground");
+const saveBf=()=>store.set("buffDraft",JSON.stringify(bf));
+const lsGet=(k,d)=>{try{const v=localStorage.getItem("evgr2:"+k);return v===null?d:JSON.parse(v)}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem("evgr2:"+k,JSON.stringify(v))}catch(e){}};
+const bv=(t,c,st)=>{const v=bf.v[`${t}.${c}.${st}`];return v==null?null:+v};
+const attackTotal=(v,t,st)=>(+v[`${t}.basic.${st}`]||0)+(+v[`${t}.attacking.${st}`]||0);
+const num1=v=>v==null?"–":(Math.round(v*10)/10).toLocaleString("en-US");
+window.onBuffData=d=>{ if(!d||!d.v) return; bf.v=Object.assign({},d.v,bf.edit); saveBf(); renderBuffs(); };
+window.onBuffScanState=on=>{ bScanning=!!on; renderBuffs(); };
+$("bfScan").onclick=()=>{ if(!bScanning){ bf={v:{},edit:{}}; saveBf(); } if(native&&native.setBuffScan) native.setBuffScan(!bScanning); else onBuffScanState(!bScanning); };
+seg("bfType",TYPES.map(t=>[t,glyph(t)]),bfType,v=>{bfType=v;store.set("bfType",v);renderBuffs()});
+function renderBuffs(){
+  const n=Object.keys(bf.v).length, prof=lsGet("buffProfiles",[]), act=lsGet("buffActive",null);
+  const cur=act&&prof.find(p=>p.id===act.id);
+  $("bfScan").textContent=bScanning?`Scanning… ${n} of 64 read · tap to stop`:(n?"Scan again":"Scan Monarch Details");
+  $("bfScan").classList.toggle("on",bScanning);
+  $("bfSub").textContent=cur?`Marchitect uses “${cur.name}”`:"Nothing saved yet";
+  // compact: attacking totals per type + march
+  let h=`<table class="bt"><tr><th>Attacking</th><th>Atk</th><th>Def</th><th>HP</th></tr>`+TYPES.map(t=>`<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td>${BST.map(([st])=>{
+    const has=bv(t,"basic",st)!=null||bv(t,"attacking",st)!=null; return `<td>${has?"+"+num1(attackTotal(bf.v,t,st))+"%":"–"}</td>`}).join("")}</tr>`).join("")+`</table>`;
+  h+=`<div class="lr sub"><span>March <b>${bf.v.march?short(bf.v.march):"–"}</b></span><span>Rally <b>${bf.v.rally?short(bf.v.rally):"–"}</b></span></div>`;
+  $("bfSum").innerHTML=h;
+  // expanded: every context for one troop type, editable
+  $("bfGrid").innerHTML=`<div class="bh"><span></span><span>ATK</span><span>DEF</span><span>HP</span></div>`+BCTX.map(([c,l])=>`<div class="bi"><span>${l}</span>${BST.map(([st])=>{
+    const k=`${bfType}.${c}.${st}`, v=bf.v[k]; return `<input data-bk="${k}" inputmode="decimal" value="${v==null?"":v}" placeholder="–" class="${bf.edit[k]!=null?"ed":""}">`}).join("")}</div>`).join("");
+  $("bfCap").innerHTML=[["march","Max march"],["rally","Rally capacity"],["reinforce","Reinforcement cap."],["slots","March slots"]].map(([k,l])=>
+    `<div class="fld"><label>${l}</label><input data-bk="${k}" inputmode="numeric" value="${bf.v[k]==null?"":fmt(bf.v[k])}" placeholder="–"></div>`).join("");
+  document.querySelectorAll("[data-bk]").forEach(el=>el.onchange=()=>{const k=el.dataset.bk, v=parseFloat(String(el.value).replace(/[^0-9.\-]/g,""));
+    if(isNaN(v)){ delete bf.v[k]; delete bf.edit[k]; } else { bf.v[k]=v; bf.edit[k]=v; } saveBf(); renderBuffs(); });
+  $("bfList").innerHTML=prof.length?prof.map(p=>`<div class="lr"><span>${p.id===(act&&act.id)?"● ":""}<b>${esc(p.name)}</b> <span class="z">${new Date(p.ts).toLocaleDateString()}</span></span><span>
+      <button class="mini" data-buse="${p.id}">${p.id===(act&&act.id)?"In use":"Use"}</button><button class="mini" data-bload="${p.id}">Edit</button><button class="mini" data-bdel="${p.id}">✕</button></span></div>`).join("")
+    :`<div class="empty">Saved profiles show here.</div>`;
+  document.querySelectorAll("[data-buse]").forEach(b=>b.onclick=()=>{lsSet("buffActive",{id:b.dataset.buse,ts:Date.now()});renderBuffs()});
+  document.querySelectorAll("[data-bload]").forEach(b=>b.onclick=()=>{const p=prof.find(x=>x.id===b.dataset.bload); if(p){bf={v:Object.assign({},p.v),edit:{}};$("bfName").value=p.name;saveBf();renderBuffs();}});
+  document.querySelectorAll("[data-bdel]").forEach(b=>b.onclick=()=>{ if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Delete?";setTimeout(()=>{b.dataset.armed="";b.textContent="✕"},3000);return}
+    const rest=prof.filter(x=>x.id!==b.dataset.bdel); lsSet("buffProfiles",rest); if(act&&act.id===b.dataset.bdel) lsSet("buffActive",null); renderBuffs(); });
+  reportHeight();
+}
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+$("bfSave").onclick=()=>{
+  if(!Object.keys(bf.v).length){ $("bfSave").textContent="Scan or type some values first"; setTimeout(()=>$("bfSave").textContent="Save & use in Marchitect",1500); return; }
+  const prof=lsGet("buffProfiles",[]), name=$("bfName").value.trim()||("Buffs "+new Date().toLocaleDateString());
+  const old=prof.find(p=>p.name===name), id=old?old.id:Date.now().toString(36);
+  const p={id,name,ts:Date.now(),v:Object.assign({},bf.v)};
+  lsSet("buffProfiles",[p,...prof.filter(x=>x.id!==id)].slice(0,12)); lsSet("buffActive",{id,ts:Date.now()});
+  if(bf.v.march&&!sizeVal()) setSize(bf.v.march);
+  $("bfSave").textContent="Saved · Marchitect updated"; setTimeout(()=>$("bfSave").textContent="Save & use in Marchitect",1500); renderBuffs();
+};
+
+/* ================= REPORTS (record: battle report Troop Buff tab) ================= */
+let rp=null, rScanning=false, rpCtx=null; try{rp=JSON.parse(store.get("report","null"))}catch(e){}
+window.onReportData=d=>{ if(!d||!d.v) return; rp=d; store.set("report",JSON.stringify(d)); renderReports(); renderMatchup(); };
+window.onReportScanState=on=>{ rScanning=!!on; renderReports(); };
+$("rpScan").onclick=()=>{ if(native&&native.setReportScan) native.setReportScan(!rScanning); else onReportScanState(!rScanning); };
+function rpTrip(side,kind,t){ const v=rp&&rp.v||{}; const a=["attack","defense","hp"].map(st=>v[`${side}.${kind}.${t}.${st}`]); return a.some(x=>x!=null)?a:null; }
+function trip(a,sign){ return a?a.map(x=>x==null?"–":sign+fmt(x)).join(" / "):"–"; }
+function rpGen(raw){ if(!raw) return null; const m=matchIdx(raw,genIndex()); return m?m.n+(m.tier?` (${m.tier})`:""):raw; }
+function renderReports(){
+  const v=rp&&rp.v||{}, n=Object.keys(v).length;
+  $("rpScan").textContent=rScanning?`Scanning… ${n} values · tap to stop`:(n?"Scan another report":"Scan a battle report");
+  $("rpScan").classList.toggle("on",rScanning);
+  if(!n){ $("rpTitle").textContent="Battle report"; $("rpSub").textContent="Open a report's Troop Buff tab"; ["rpSum","rpDeb","rpCmp"].forEach(id=>$(id).innerHTML=`<div class="empty">No report read yet.</div>`); renderRpList(); return reportHeight(); }
+  $("rpTitle").textContent=(rp.title?rp.title.replace(/\b\w/g,c=>c.toUpperCase()):"Battle report");
+  $("rpSub").textContent=[rp.date,(rp.me||"You")+" vs "+(rp.enemy||"them")].filter(Boolean).join(" · ");
+  $("rpSum").innerHTML=`<table class="bt"><tr><th>Buffs</th><th>You</th><th>Them</th></tr>`+TYPES.map(t=>`<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td><td>${trip(rpTrip("L","buff",t),"")}</td><td>${trip(rpTrip("R","buff",t),"")}</td></tr>`).join("")+`</table>`;
+  const trapL=Object.keys(v).filter(k=>k.startsWith("L.trap")).map(k=>v[k]), trapR=Object.keys(v).filter(k=>k.startsWith("R.trap")).map(k=>v[k]);
+  $("rpDeb").innerHTML=`<table class="bt"><tr><th>Debuffs</th><th>Yours on them</th><th>Theirs on you</th></tr>`+TYPES.map(t=>`<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td><td>${trip(rpTrip("L","debuff",t),"−")}</td><td>${trip(rpTrip("R","debuff",t),"−")}</td></tr>`).join("")+`</table>`
+    +((trapL.length||trapR.length)?`<div class="lr sub"><span>Trap attack <b>${trapL.length?"+"+fmt(Math.max(...trapL))+"%":"–"}</b></span><span><b>${trapR.length?"+"+fmt(Math.max(...trapR))+"%":""}</b></span></div>`:"");
+  // compare your side with your saved profile for the matching situation
+  const def=rp.title&&/defen/.test(rp.title); if(!rpCtx) rpCtx=def?"incity":"attacking";
+  seg("rpCtx",[["attacking","Attacking / field"],["incity","Your city"]],rpCtx,c=>{rpCtx=c;renderReports()});
+  const prof=lsGet("buffProfiles",[]), act=lsGet("buffActive",null), P=act&&prof.find(p=>p.id===act.id);
+  const gl=(rp.genL||[]).map(rpGen).filter(Boolean);
+  if(!P) $("rpCmp").innerHTML=`<div class="empty">Save your buffs (Buffs) to see what this fight added on top.</div>`;
+  else $("rpCmp").innerHTML=`<table class="bt"><tr><th>${esc(P.name)}</th><th>Report</th><th>Saved</th><th>Added</th></tr>`+TYPES.map(t=>{const r=rpTrip("L","buff",t); if(!r) return "";
+      return ["attack","defense","hp"].map((st,i)=>{ const base=(+P.v[`${t}.basic.${st}`]||0)+(+P.v[`${t}.${rpCtx}.${st}`]||0); const rv=r[i]; if(rv==null) return "";
+        const d=rv-base; return `<tr><td class="c-${t}">${i?"":glyph(t)}${i?"":NAME[t]+" "}${st==="hp"?"HP":st[0].toUpperCase()+st.slice(1,3)}</td><td>${fmt(rv)}%</td><td>${fmt(base)}%</td><td class="${d>=0?"p":"m"}">${d>=0?"+":""}${fmt(d)}%</td></tr>`}).join("")}).join("")+`</table>`
+      +`<p class="note">“Added” is what that march's generals${gl.length?` (${gl.map(esc).join(" + ")})`:""}, dragon, gear and anything Monarch Details leaves out contributed in this fight.</p>`;
+  renderRpList(); reportHeight();
+}
+function renderRpList(){
+  const list=JSON.parse(store.get("reports","[]"));
+  $("rpList").innerHTML=list.length?list.map((r,i)=>`<div class="lr"><span><b>${esc(r.title||"Report")}</b> <span class="z">${esc(r.date||"")} · ${esc(r.enemy||"")}</span></span><span><button class="mini" data-rload="${i}">Open</button></span></div>`).join(""):`<div class="empty">Saved reports show here.</div>`;
+  document.querySelectorAll("[data-rload]").forEach(b=>b.onclick=()=>{ rp=list[+b.dataset.rload]; rpCtx=null; store.set("report",JSON.stringify(rp)); renderReports(); renderMatchup(); });
+}
+$("rpSave").onclick=()=>{ if(!rp||!rp.v) return; const list=JSON.parse(store.get("reports","[]")).filter(r=>!(r.date&&r.date===rp.date));
+  store.set("reports",JSON.stringify([Object.assign({saved:Date.now()},rp),...list].slice(0,20))); $("rpSave").textContent="Saved"; setTimeout(()=>$("rpSave").textContent="Save report",1200); renderRpList(); reportHeight(); };
+
+paintAuto(); calc(); renderScout(); renderMuster(); renderGenerals(); renderBuffs(); renderReports(); renderMatchup(); apply();
 window.addEventListener("storage",e=>{ if(e.key==="evgr2:fromApp"&&mu.src!=="manual") pullFromApp(true); });
 window.addEventListener("load",reportHeight);
 document.querySelectorAll("img").forEach(i=>i.addEventListener("load",reportHeight));

@@ -42,6 +42,12 @@ public class ScreenReader {
 
         /** Called with the generals read so far (JSON) while the generals scan is on. */
         void onGenerals(String json);
+
+        /** Monarch Detail values read so far (JSON) while the Buffs scan is on. */
+        void onBuffs(String json);
+
+        /** Battle report Troop Buff values read so far (JSON) while the Reports scan is on. */
+        void onReport(String json);
     }
 
     private static final long INTERVAL_MS = 1500;
@@ -68,6 +74,26 @@ public class ScreenReader {
     private volatile boolean mineScan = false;
     private final GeneralScan gens = new GeneralScan();
     private volatile boolean genScan = false;
+    private final BuffScan buffs = new BuffScan();
+    private volatile boolean buffScan = false;
+    private final ReportScan report = new ReportScan();
+    private volatile boolean reportScan = false;
+
+    /** Read the Monarch Detail (Military) screen while you scroll it. */
+    public void setBuffScan(boolean on) {
+        handler.post(() -> {
+            if (on && !buffScan) buffs.reset();
+            buffScan = on;
+        });
+    }
+
+    /** Read a battle report's Troop Buff tab while you scroll it. */
+    public void setReportScan(boolean on) {
+        handler.post(() -> {
+            if (on && !reportScan) report.reset();
+            reportScan = on;
+        });
+    }
 
     /** Read your generals from the in-game Generals list (Detail mode) while you scroll it. */
     public void setGenScan(boolean on) {
@@ -146,7 +172,7 @@ public class ScreenReader {
                 }
             } catch (Exception ignored) {
             }
-            handler.postDelayed(this, mineScan || genScan || tally.isActive(System.currentTimeMillis()) ? FAST_MS : INTERVAL_MS);
+            handler.postDelayed(this, mineScan || genScan || buffScan || reportScan || tally.isActive(System.currentTimeMillis()) ? FAST_MS : INTERVAL_MS);
         }
     };
 
@@ -196,6 +222,15 @@ public class ScreenReader {
             int[] owned = {-1};
             List<GeneralScan.Seen> seen = GeneralScan.extract(words(text), px, w, h, owned);
             if (gens.feed(seen, owned[0])) listener.onGenerals(gens.toJson());
+            return;
+        }
+        if (buffScan && (all.contains("monarch detail") || all.contains("military"))) {
+            if (buffs.feed(BuffScan.extract(words(text), bmp.getWidth()))) listener.onBuffs(buffs.toJson());
+            return;
+        }
+        if (reportScan && (all.contains("troop buff") || all.contains("allied troops") || all.contains("against enemy")
+                || all.contains("attack+") || all.contains("defense-") || all.contains("main general"))) {
+            if (report.feed(ReportScan.extract(words(text), bmp.getWidth()))) listener.onReport(report.toJson());
             return;
         }
         boolean scout = all.contains("scout report") || all.contains("scout");

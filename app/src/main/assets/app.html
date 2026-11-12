@@ -605,7 +605,7 @@ function scorePair(main, assistant, roster, account, role) {
   //    Skill books are skipped for a stat when the main or assistant's own skill blocks that book.
   const blocked = new Set([...(main.bookConflicts || []), ...((assistant && assistant.assistantBookConflicts) || [])]);
   for (const src of ['baseBuffs', 'gear', 'dragon', 'books']) {
-    const b = account[src] || {};
+    const b = (src === 'baseBuffs' && account.baseByRole && account.baseByRole[role]) || account[src] || {};
     for (const s of STATS) {
       if (!b[s]) continue;
       if (src === 'books' && blocked.has(s)) { acc.breakdown.push({ from: 'books (blocked)', stat: s, value: 0 }); continue; }
@@ -720,7 +720,9 @@ function segControls(withRole) {
 function accountFor(t) {
   ROLE_KEYS.forEach(k => ROLES[k].offenseWeight = state.account.weights[k]);
   const pt = state.account.perType[t];
-  return { ...state.account, troop: { type: t, ...pt.troop }, baseBuffs: pt.baseBuffs };
+  const f = pt.flat || {};
+  return { ...state.account, troop: { type: t, ...pt.troop, attack: pt.troop.attack + (f.attack || 0), defense: pt.troop.defense + (f.defense || 0), hp: pt.troop.hp + (f.hp || 0) },
+    baseBuffs: pt.baseBuffs, baseByRole: pt.baseByRole || null };
 }
 function ownedRoster(extraId) {
   const roster = {};
@@ -1085,7 +1087,7 @@ document.addEventListener('click', e => {
     for (const g of GENS) if (g.troopType === state.troopType) state.roster[g.id].owned = t.dataset.act === 'all';
     save(); return render();
   }
-  if (t.dataset.act === 'reset') { state.account = clone(DEFAULT_ACCOUNT); save(); return render(); }
+  if (t.dataset.act === 'reset') { state.account = clone(DEFAULT_ACCOUNT); store.set('buffActive', null); store.set('accountBeforeBuffs', null); save(); return render(); }
 });
 
 document.addEventListener('input', e => {
@@ -1113,7 +1115,9 @@ document.addEventListener('change', e => {
     let v = parseFloat(t.value); if (isNaN(v)) v = 0;
     if (t.dataset.unit === '%') v = v / 100;
     if (t.dataset.path.startsWith('weights.')) v = Math.max(0, Math.min(1, v));
-    setP(state.account, t.dataset.path, v); save();
+    setP(state.account, t.dataset.path, v);
+    { const m = t.dataset.path.match(/^perType\.(\w+)\.baseBuffs\./); if (m && state.account.perType[m[1]].baseByRole) delete state.account.perType[m[1]].baseByRole; }
+    save();
   }
 });
 
@@ -1736,6 +1740,64 @@ document.addEventListener('click', ev => {
   snapshot(`Before ${act === 'all' ? 'ticking' : 'unticking'} all ${TLABEL[state.troopType]}`);
   setTimeout(() => toast(`${act === 'all' ? 'Ticked' : 'Unticked'} all ${TLABEL[state.troopType]} generals`, true), 0);
 }, true);
+</script>
+<script>
+/* ===== Saved buff profiles (scanned from Monarch Details in the overlay's Buffs tool) =====
+   A profile replaces the K45 sample for: base buffs per troop type and role context, flat "Single" troop stats,
+   max march and rally capacity. Generals are still added on top, same as the Xwing sheets.
+   Contexts: rally lead / solo attack = basic + attacking; reinforce = basic + in city + reinforcing; keep defense = basic + in city. */
+function buffProfiles() { return store.get('buffProfiles', []) || []; }
+function applyBuffProfile(p) {
+  if (!state.account.profile) store.set('accountBeforeBuffs', clone(state.account));
+  const v = p.v, g = (t, c, st) => (+v[`${t}.${c}.${st}`] || 0) / 100;
+  for (const t of ['ground', 'ranged', 'mounted', 'siege']) {
+    const pt = state.account.perType[t], role = ctxs => Object.fromEntries(['attack', 'defense', 'hp'].map(st => [st, ctxs.reduce((a, c) => a + g(t, c, st), 0)]));
+    const atk = role(['basic', 'attacking']);
+    pt.baseBuffs = atk;
+    pt.baseByRole = { rallyLead: atk, soloAttack: atk, reinforce: role(['basic', 'incity', 'reinforcing']), keepDefense: role(['basic', 'incity']) };
+    pt.flat = { attack: +v[`${t}.single.attack`] || 0, defense: +v[`${t}.single.defense`] || 0, hp: +v[`${t}.single.hp`] || 0 };
+  }
+  if (v.march) state.account.march.flat = +v.march;
+  if (v.rally) state.account.rally.flat = +v.rally;
+  state.account.profile = { id: p.id, name: p.name, ts: p.ts };
+  save();
+}
+function stopBuffProfile() {
+  const prev = store.get('accountBeforeBuffs', null);
+  if (prev) { const w = state.account.weights; state.account = prev; state.account.weights = w; }
+  else { for (const t in state.account.perType) { delete state.account.perType[t].baseByRole; delete state.account.perType[t].flat; } }
+  delete state.account.profile; store.set('accountBeforeBuffs', null); save();
+}
+function syncBuffProfile() {
+  const act = store.get('buffActive', null), done = store.get('buffAppliedTs', 0) || 0;
+  if (!act) { if (state.account.profile) { stopBuffProfile(); render(); } return; }
+  if (act.ts <= done && state.account.profile && state.account.profile.id === act.id) return;
+  const p = buffProfiles().find(x => x.id === act.id); if (!p) return;
+  applyBuffProfile(p); store.set('buffAppliedTs', act.ts); render();
+}
+const _renderAccount = renderAccount;
+renderAccount = function () {
+  const profs = buffProfiles(), cur = state.account.profile;
+  let h = `<div class="grp"><h3>${ic('chart')}Your scanned buffs</h3><div class="list">`;
+  if (!profs.length) h += `<div class="note" style="padding:10px 14px">Open the overlay → Buffs, scan Monarch Details and save. Your real buffs, max march and rally capacity then replace the sample numbers below.</div>`;
+  for (const p of profs) {
+    const on = cur && cur.id === p.id;
+    h += `<div class="snap"><span>${on ? '● ' : ''}${esc(p.name)}<small>${new Date(p.ts).toLocaleDateString()}${p.v.march ? ' · march ' + Number(p.v.march).toLocaleString() : ''}</small></span>${on ? `<button class="btn" data-bp="stop">Stop using</button>` : `<button class="btn" data-bp="${p.id}">Use</button>`}</div>`;
+  }
+  h += `</div></div>`;
+  if (cur) h += `<div class="note">Using “${esc(cur.name)}”. Base buffs below are the attacking totals (basic + attacking); reinforce and keep defense use the in-city totals. Editing a base buff by hand switches that troop type back to manual.</div>`;
+  return h + _renderAccount();
+};
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-bp]'); if (!b) return;
+  if (b.dataset.bp === 'stop') { store.set('buffActive', null); stopBuffProfile(); }
+  else { const p = buffProfiles().find(x => x.id === b.dataset.bp); if (p) { const ts = Date.now(); store.set('buffActive', { id: p.id, ts }); applyBuffProfile(p); store.set('buffAppliedTs', ts); } }
+  render();
+});
+syncBuffProfile();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) syncBuffProfile(); });
+window.addEventListener('focus', syncBuffProfile);
+window.addEventListener('storage', e => { if (e.key === 'evgr2:buffActive' || e.key === 'evgr2:buffProfiles') syncBuffProfile(); });
 </script>
 <script>
 /* ===== Marchitect app <-> overlay bridge (Android) =====

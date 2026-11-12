@@ -78,7 +78,7 @@ public class OverlayService extends Service {
     private LinearLayout menu;
     private WindowManager.LayoutParams menuLp;
     private boolean menuShown = false;
-    private View menuLayers, menuScout, menuMuster, menuGenerals;
+    private final java.util.LinkedHashMap<View, String> menuItems = new java.util.LinkedHashMap<>();
 
     // panel
     private LinearLayout panel;
@@ -87,7 +87,7 @@ public class OverlayService extends Service {
     private TextView title, expandBtn;
     private boolean panelShown = false;
     private boolean keyboard = false;
-    private String view = "layers";           // layers | scout | muster | generals
+    private String view = "layers";           // war: scout | layers | matchup   record: buffs | reports | generals
     private boolean expanded = false;
     private int contentHeightDp = 200;
 
@@ -114,7 +114,8 @@ public class OverlayService extends Service {
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         prefs = getSharedPreferences("overlay", MODE_PRIVATE);
         view = prefs.getString("view", "layers");
-        if (!view.matches("scout|muster|generals")) view = "layers";
+        if (view.equals("muster")) view = "matchup";
+        if (!view.matches("scout|matchup|buffs|reports|generals")) view = "layers";
         expanded = prefs.getBoolean("exp_" + view, false);
         goForeground(false);
         createBubble();
@@ -212,6 +213,16 @@ public class OverlayService extends Service {
                 @Override
                 public void onGenerals(String json) {
                     main.post(() -> js("window.onGenData&&onGenData(" + json + ")"));
+                }
+
+                @Override
+                public void onBuffs(String json) {
+                    main.post(() -> js("window.onBuffData&&onBuffData(" + json + ")"));
+                }
+
+                @Override
+                public void onReport(String json) {
+                    main.post(() -> js("window.onReportData&&onReportData(" + json + ")"));
                 }
 
                 @Override
@@ -347,24 +358,42 @@ public class OverlayService extends Service {
         bg.setCornerRadius(dp(14));
         menu.setBackground(bg);
         menu.setElevation(dp(8));
-        menuLayers = menuItem(R.drawable.badge_layers, "Layers", "layers");
-        menuScout = menuItem(R.drawable.badge_scout, "Scout", "scout");
-        menu.addView(menuLayers);
-        LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        gap.topMargin = dp(4);
-        menu.addView(menuScout, gap);
-        menuMuster = menuItem(R.drawable.badge_muster, "Muster", "muster");
-        LinearLayout.LayoutParams gap2 = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        gap2.topMargin = dp(4);
-        menu.addView(menuMuster, gap2);
-        menuGenerals = menuItem(R.drawable.badge_generals, "Generals", "generals");
-        LinearLayout.LayoutParams gap3 = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        gap3.topMargin = dp(4);
-        menu.addView(menuGenerals, gap3);
+        // War tools on top (used mid-fight), record tools underneath (used to save your own stats)
+        menu.addView(menuHeader("WAR"));
+        addMenu(R.drawable.badge_scout, "Scout", "scout");
+        addMenu(R.drawable.badge_layers, "Layers", "layers");
+        addMenu(R.drawable.badge_matchup, "Matchup", "matchup");
+        View div = new View(this);
+        div.setBackgroundColor(C_LINE);
+        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Math.max(1, dp(1)));
+        dl.topMargin = dp(6); dl.bottomMargin = dp(2);
+        menu.addView(div, dl);
+        menu.addView(menuHeader("RECORD"));
+        addMenu(R.drawable.badge_buffs, "Buffs", "buffs");
+        addMenu(R.drawable.badge_reports, "Reports", "reports");
+        addMenu(R.drawable.badge_generals, "Generals", "generals");
         menuLp = overlayParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    }
+
+    private TextView menuHeader(String text) {
+        TextView t = new TextView(this);
+        t.setText(text);
+        t.setTextColor(Color.parseColor("#8E8E93"));
+        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 8);
+        t.setLetterSpacing(0.12f);
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(0, dp(2), 0, dp(1));
+        return t;
+    }
+
+    private void addMenu(int icon, String label, String target) {
+        View v = menuItem(icon, label, target);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(2);
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        menu.addView(v, lp);
+        menuItems.put(v, target);
     }
 
     private View menuItem(int icon, String label, String target) {
@@ -390,9 +419,9 @@ public class OverlayService extends Service {
     }
 
     private void paintMenu() {
-        for (View v : new View[]{menuLayers, menuScout, menuMuster, menuGenerals}) {
-            boolean on = panelShown && ((v == menuLayers && view.equals("layers")) || (v == menuScout && view.equals("scout"))
-                    || (v == menuMuster && view.equals("muster")) || (v == menuGenerals && view.equals("generals")));
+        for (java.util.Map.Entry<View, String> e : menuItems.entrySet()) {
+            View v = e.getKey();
+            boolean on = panelShown && view.equals(e.getValue());
             GradientDrawable bg = new GradientDrawable();
             bg.setColor(on ? Color.parseColor("#2EF2B544") : Color.TRANSPARENT);
             if (on) bg.setStroke(dp(1), C_TINT);
@@ -572,7 +601,7 @@ public class OverlayService extends Service {
     }
 
     private void paintHeader() {
-        title.setText(view.equals("scout") ? "Scout" : view.equals("muster") ? "Muster" : view.equals("generals") ? "Generals" : "Layers");
+        title.setText(view.equals("scout") ? "Scout" : view.equals("matchup") ? "Matchup" : view.equals("buffs") ? "Buffs" : view.equals("reports") ? "Reports" : view.equals("generals") ? "Generals" : "Layers");
         expandBtn.setRotation(expanded ? -90 : 90);
     }
 
@@ -737,6 +766,24 @@ public class OverlayService extends Service {
                 if (reader == null) { if (on) requestCapture(); js("window.onGenScanState&&onGenScanState(false)"); return; }
                 reader.setGenScan(on);
                 js("window.onGenScanState&&onGenScanState(" + on + ")");
+            });
+        }
+
+        @JavascriptInterface
+        public void setBuffScan(boolean on) {
+            main.post(() -> {
+                if (reader == null) { if (on) requestCapture(); js("window.onBuffScanState&&onBuffScanState(false)"); return; }
+                reader.setBuffScan(on);
+                js("window.onBuffScanState&&onBuffScanState(" + on + ")");
+            });
+        }
+
+        @JavascriptInterface
+        public void setReportScan(boolean on) {
+            main.post(() -> {
+                if (reader == null) { if (on) requestCapture(); js("window.onReportScanState&&onReportScanState(false)"); return; }
+                reader.setReportScan(on);
+                js("window.onReportScanState&&onReportScanState(" + on + ")");
             });
         }
 
