@@ -1,0 +1,336 @@
+Section,General,Troop/Role,Status,Note
+In Marchitect,Edward Teach,siege,MATCH,Base and growth agree with public source(s)
+In Marchitect,John Churchill,siege,MATCH,Base and growth agree with public source(s)
+In Marchitect,Presley O'Bannon,siege,NOT CHECKED,
+In Marchitect,Zucca,siege,NOT CHECKED,
+In Marchitect,Petronas,siege,NOT CHECKED,
+In Marchitect,Demetrius,siege,NOT CHECKED,
+In Marchitect,Surena,siege,NOT CHECKED,
+In Marchitect,Philip II,siege,NOT CHECKED,
+In Marchitect,Champlain,siege,NOT CHECKED,
+In Marchitect,Daniel Morgan,siege,MATCH,Base and growth agree with public source(s)
+In Marchitect,Napoleon,siege,NOT CHECKED,
+In Marchitect,Matthias I,siege,NOT CHECKED,
+In Marchitect,Romulus,siege,NOT CHECKED,
+In Marchitect,Irene d'Arneau,siege,NOT CHECKED,
+In Marchitect,Francis Drake,siege,NOT CHECKED,
+In Marchitect,Shapur I,siege,NOT CHECKED,
+In Marchitect,Isabella I,siege,MATCH,Base and growth agree with public source(s)
+In Marchitect,Christina (Awakened),siege,UNVERIFIED,Theria lists base Christina only; Awakened attack 137/9.23 not confirmed
+In Marchitect,Kleos,siege,NOT CHECKED,
+In Marchitect,Pallas,siege,NOT CHECKED,
+In Marchitect,Probus,siege,NOT CHECKED,
+In Marchitect,John Hunyadi,siege,NOT CHECKED,
+In Marchitect,Mu Guiying,siege,NOT CHECKED,
+In Marchitect,Gunther,siege,NOT CHECKED,
+In Marchitect,Melisande,siege,NOT CHECKED,
+In Marchitect,Theodosius I,siege,NOT CHECKED,
+In Marchitect,Maurice de Saxe,siege,NOT CHECKED,
+In Marchitect,Theobald I,siege,NOT CHECKED,
+In Marchitect,Stephen II,siege,NOT CHECKED,
+In Marchitect,Hersilia,siege,MATCH,Base and growth agree with public source(s)
+In Marchitect,Kiso Yoshinaka,siege,NOT CHECKED,
+In Marchitect,Olaf Kotkonung,siege,NOT CHECKED,Same general as Olaf Skotkonung (spelling)
+In Marchitect,Mouri Motonari,mounted,NOT CHECKED,
+In Marchitect,Mordred,mounted,NOT CHECKED,
+In Marchitect,Ii Naomasa,mounted,NOT CHECKED,
+In Marchitect,Zhao Yun,mounted,NOT CHECKED,
+In Marchitect,George A. Custer,mounted,MATCH,Base and growth agree with public source(s)
+In Marchitect,Louis XIV,mounted,NOT CHECKED,
+In Marchitect,Roland,mounted,NOT CHECKED,
+In Marchitect,Martinus,mounted,NOT CHECKED,
+In Marchitect,Prince Eugene,mounted,NOT CHECKED,
+In Marchitect,Gaius Octavius,mounted,NOT CHECKED,
+In Marchitect,Artemis,mounted,MATCH,Base and growth agree with public source(s)
+In Marchitect,Tishtrya,mounted,NOT CHECKED,
+In Marchitect,Rostam,mounted,NOT CHECKED,
+In Marchitect,Shaybani,mounted,MATCH,Base and growth agree with public source(s)
+In Marchitect,Washington Prime,mounted,MATCH,Base and growth agree with public source(s)
+In Marchitect,Constantine,mounted,MATCH,Base and growth agree with public source(s); Same general as Constantine XI
+In Marchitect,Olav II,mounted,NOT CHECKED,
+In Marchitect,George Monck,mounted,MATCH,Base and growth agree with public source(s)
+In Marchitect,Cheng Yaojin,mounted,SOURCES DISAGREE,Matches OCG; Theria lists 112/132/137/101
+In Marchitect,Stephen I of Hungary,mounted,NOT CHECKED,
+In Marchitect,Barbarossa,mounted,NOT CHECKED,
+In Marchitect,Hermes,mounted,NOT CHECKED,
+In Marchitect,Haakon the Good,mounted,NOT CHECKED,Same general as Haakon Haraldsson
+In Marchitect,Marco Polo,mounted,MATCH,Base and growth agree with public source(s)
+In Marchitect,Hestia,mounted,NOT CHECKED,
+In Marchitect,Henry IV,mounted,NOT CHECKED,
+In Marchitect,Poligenus,mounted,NOT CHECKED,
+In Marchitect,Babur,mounted,NOT CHECKED,
+In Marchitect,Napoleon Prime,mounted,NOT CHECKED,
+In Marchitect,Andre Massena,mounted,NOT CHECKED,
+In Marchitect,Jayavarman II,mounted,NOT CHECKED,
+In Marchitect,Beowulf,mounted,NOT CHECKED,
+In Marchitect,Ludwig,ground,NOT CHECKED,
+In Marchitect,Vercingetorix,ground,NOT CHECKED,
+In Marchitect,Alessandra,ground,NOT CHECKED,
+In Marchitect,Elise,ground,MATCH,Base and growth agree with public source(s)
+In Marchitect,Charles V,ground,NOT CHECKED,
+In Marchitect,Maeda Toshiie,ground,NOT CHECKED,
+In Marchitect,Soult,ground,NOT CHECKED,
+In Marchitect,Scipio Africanus,ground,MATCH,Base and growth agree with public source(s)
+In Marchitect,Trajan,ground,NOT CHECKED,
+In Marchitect,Epaminondas,ground,NOT CHECKED,
+In Marchitect,Guan Yu,ground,MATCH,Base and growth agree with public source(s)
+In Marchitect,Francis I of France,ground,NOT CHECKED,
+In Marchitect,Alexander the Great,ground,MATCH,Base and growth agree with public source(s)
+In Marchitect,Lorenzo de Medici,ground,NOT CHECKED,
+In Marchitect,Lafayette,ground,NOT CHECKED,
+In Marchitect,Niccolo Piccinino,ground,NOT CHECKED,
+In Marchitect,Maria Carolina,ground,MISMATCH,Base stats ~12 higher than OCG+Theria (131/123/125/117); growth matches
+In Marchitect,Zhang Fei,ground,NOT CHECKED,
+In Marchitect,Yue Fei,ground,NOT CHECKED,
+In Marchitect,Lu Xun,ground,NOT CHECKED,
+In Marchitect,Pyrrhus,ground,NOT CHECKED,
+In Marchitect,Sweyn,ground,NOT CHECKED,Same general as Sweyn Forkbeard
+In Marchitect,Alexander Hamilton,ground,MISMATCH,Base stats ~12 higher than OCG+Theria (123/125/129/119); growth matches
+In Marchitect,Akechi Mitsuhide,ground,NOT CHECKED,
+In Marchitect,Suchet,ground,NOT CHECKED,
+In Marchitect,Frigg,ground,NOT CHECKED,
+In Marchitect,Totila,ground,NOT CHECKED,
+In Marchitect,Miltiades,ground,MATCH,Base and growth agree with public source(s)
+In Marchitect,Narcissus,ground,MATCH,Base and growth agree with public source(s)
+In Marchitect,Lucilla,ground,MATCH,Base and growth agree with public source(s)
+In Marchitect,Gao Changgong,ground,NOT CHECKED,
+In Marchitect,Louis II,ground,NOT CHECKED,
+In Marchitect,Douglas,ranged,NOT CHECKED,
+In Marchitect,Charles XII,ranged,NOT CHECKED,
+In Marchitect,Princess Kaguya,ranged,NOT CHECKED,
+In Marchitect,James Conrad,ranged,NOT CHECKED,
+In Marchitect,Eleanor,ranged,NOT CHECKED,
+In Marchitect,Elektra,ranged,NOT CHECKED,
+In Marchitect,Wallenstein,ranged,NOT CHECKED,
+In Marchitect,Tomyris,ranged,MATCH,Base and growth agree with public source(s)
+In Marchitect,Winfield Scott,ranged,NOT CHECKED,
+In Marchitect,Rumyantsev,ranged,NOT CHECKED,
+In Marchitect,Godfrey,ranged,NOT CHECKED,Same general as Godfrey of Bouillon
+In Marchitect,Marcian,ranged,NOT CHECKED,
+In Marchitect,Li Shimin,ranged,NOT CHECKED,
+In Marchitect,Toyotomi Hideyori,ranged,NOT CHECKED,
+In Marchitect,Artemisia I,ranged,MATCH,Base and growth agree with public source(s)
+In Marchitect,Visconti,ranged,NOT CHECKED,
+In Marchitect,Algernon Sidney,ranged,MATCH,Base and growth agree with public source(s)
+In Marchitect,James Cook,ranged,NOT CHECKED,
+In Marchitect,Charles VI,ranged,NOT CHECKED,
+In Marchitect,Huitzilopochtli,ranged,NOT CHECKED,
+In Marchitect,Gonzalo,ranged,NOT CHECKED,
+In Marchitect,Brian Boru,ranged,NOT CHECKED,
+In Marchitect,Ahmose I,ranged,NOT CHECKED,
+In Marchitect,Merlin,ranged,MATCH,Base and growth agree with public source(s)
+In Marchitect,Ragnar,ranged,NOT CHECKED,
+In Marchitect,Hatshepsut,ranged,NOT CHECKED,
+In Marchitect,Franz Joseph I,ranged,NOT CHECKED,
+In Marchitect,Marcus Agrippa,ranged,NOT CHECKED,
+In Marchitect,Sigurd,ranged,NOT CHECKED,
+In Marchitect,Louis IX,ranged,NOT CHECKED,
+In Marchitect,Mihai,ranged,NOT CHECKED,
+In Marchitect,Coyolxauhqui,ranged,MATCH,Base and growth agree with public source(s)
+Not in Marchitect,Athena,Mounted (Aug 2026),MISSING,125/8.85 131/9.31 121/8.62 119/8.13; mounted + monster skill
+Not in Marchitect,King Arthur,"Monsters, Mounted PvP",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Gustavus Adolphus,"Siege PvP, Ranged PvP",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Edward the Black Prince,Ranged PvP,NOT IN XWING TOP 32,Europe
+Not in Marchitect,William Wallace,Siege PvP,NOT IN XWING TOP 32,Europe
+Not in Marchitect,El Cid,"Mounted PvP, Ground PvP",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Alfred the Great,Ranged PvP,NOT IN XWING TOP 32,Europe
+Not in Marchitect,Queen Victoria,Ground PvP,NOT IN XWING TOP 32,Europe
+Not in Marchitect,Robert Guiscard,Mounted PvP,NOT IN XWING TOP 32,Europe
+Not in Marchitect,Robert the Bruce,"Defense, Ground PvP",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Simeon the Great,Ranged PvP,NOT IN XWING TOP 32,Europe
+Not in Marchitect,Basil II,"Ground PvP, Monsters",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Carus,Ground PvP,NOT IN XWING TOP 32,Europe
+Not in Marchitect,Maximilian I,"Mounted PvP, Sub City",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Harald III,"Ranged PvP, Defense",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Elizabeth I,"Defense, Ranged PvP",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Henry V,"Ranged PvP, Defense",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Bertrand du Guesclin,"Mounted PvP, Monsters",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Lysander,"Mounted PvP, Defense",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Septimius Severus,"Siege PvP, Defense",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Edward III,"Ranged PvP, Siege PvP",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Turenne,"Ground PvP, Defense",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Aurelian,Ground PvP,NOT IN XWING TOP 32,Europe
+Not in Marchitect,Maarten Tromp,"Ranged PvP, Siege PvP",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Laudon,"Mounted PvP, Monsters",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Raimondo,"Siege PvP, Defense",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Christina,Siege PvP,NOT IN XWING TOP 32,Europe
+Not in Marchitect,Arthur Wellesley,"Ranged PvP, Defense",NOT IN XWING TOP 32,Europe
+Not in Marchitect,Washington,Mounted PvP,NOT IN XWING TOP 32,America
+Not in Marchitect,Casimir Pulaski,Siege PvP,NOT IN XWING TOP 32,America
+Not in Marchitect,Sherman,Siege PvP,NOT IN XWING TOP 32,America
+Not in Marchitect,Ulysses S Grant,"Siege PvP, Defense",NOT IN XWING TOP 32,America
+Not in Marchitect,Oda Nobunaga,Ground PvP,NOT IN XWING TOP 32,Japan
+Not in Marchitect,Takeda Shingen,"Defense, Mounted PvP",NOT IN XWING TOP 32,Japan
+Not in Marchitect,Minamoto no Yoshitsune,Ranged PvP,NOT IN XWING TOP 32,Japan
+Not in Marchitect,Himiko,"Sub City, Ranged PvP",NOT IN XWING TOP 32,Japan
+Not in Marchitect,Tachibana Ginchiyo,"Ranged PvP, Defense",NOT IN XWING TOP 32,Japan
+Not in Marchitect,Sei Shonagon,"Siege PvP, Defense",NOT IN XWING TOP 32,Japan
+Not in Marchitect,Jumong,Ranged PvP,NOT IN XWING TOP 32,Korea
+Not in Marchitect,Gwanggaeto the Great,Ranged PvP,NOT IN XWING TOP 32,Korea
+Not in Marchitect,Yeon Gaesomun,Ranged PvP,NOT IN XWING TOP 32,Korea
+Not in Marchitect,Emperor Qin Shihuang,Siege PvP,NOT IN XWING TOP 32,China
+Not in Marchitect,Li Jing,"Monsters, Mounted PvP",NOT IN XWING TOP 32,China
+Not in Marchitect,Sun Ce,"Monsters, Mounted PvP",NOT IN XWING TOP 32,China
+Not in Marchitect,Qin Qiong,"Ground PvP, Defense",NOT IN XWING TOP 32,China
+Not in Marchitect,Peter the Great,Ground PvP,NOT IN XWING TOP 32,Russia
+Not in Marchitect,Alexander Nevsky,"Sub City, Ground PvP",NOT IN XWING TOP 32,Russia
+Not in Marchitect,Vladimir the Great,"Ranged PvP, Sub City",NOT IN XWING TOP 32,Russia
+Not in Marchitect,Khalid,Siege PvP,NOT IN XWING TOP 32,Arabia
+Not in Marchitect,Genghis Khan,Mounted PvP,NOT IN XWING TOP 32,Other
+Not in Marchitect,Raged King,Siege PvP,NOT IN XWING TOP 32,Other
+Not in Marchitect,Prince Rhaegar,"Monsters, Mounted PvP",NOT IN XWING TOP 32,Other
+Not in Marchitect,Mehmed II,Ranged PvP,NOT IN XWING TOP 32,Other
+Not in Marchitect,Suleiman the Magnificent,Siege PvP,NOT IN XWING TOP 32,Other
+Not in Marchitect,Hannibal,"Mounted PvP, Monsters",NOT IN XWING TOP 32,Other
+Not in Marchitect,Cyrus the Great,"Monsters, Mounted PvP",NOT IN XWING TOP 32,Other
+Not in Marchitect,Ramesses II,"Siege PvP, Defense",NOT IN XWING TOP 32,Other
+Not in Marchitect,Thutmose III,Ranged PvP,NOT IN XWING TOP 32,Other
+Not in Marchitect,Gnarr,Ranged PvP,NOT IN XWING TOP 32,Other
+Not in Marchitect,Mason Weaver,"Ranged PvP, Defense",NOT IN XWING TOP 32,Other
+Not in Marchitect,Subutai,"Ranged PvP, Defense",NOT IN XWING TOP 32,Other
+Not in Marchitect,Idunn,"Ranged PvP, Defense",NOT IN XWING TOP 32,Other
+Not in Marchitect,Freyja,"Ground PvP, Defense",NOT IN XWING TOP 32,Other
+Not in Marchitect,Frederick the Great,Ranged PvP,NOT IN XWING TOP 32,Purple
+Not in Marchitect,Joan of Arc,"Monsters, Mounted PvP",NOT IN XWING TOP 32,Purple
+Not in Marchitect,Philip Sheridan,"Monsters, Mounted PvP",NOT IN XWING TOP 32,Purple
+Not in Marchitect,Miyamoto Musashi,Ground PvP,NOT IN XWING TOP 32,Purple
+Not in Marchitect,Kim Si-min,Siege PvP,NOT IN XWING TOP 32,Purple
+Not in Marchitect,Yi Song-gye,Ranged PvP,NOT IN XWING TOP 32,Purple
+Not in Marchitect,Xiang Yu,"Monsters, Mounted PvP",NOT IN XWING TOP 32,Purple
+Not in Marchitect,Hua Mulan,Ground PvP,NOT IN XWING TOP 32,Purple
+Not in Marchitect,Ivan IV,Siege PvP,NOT IN XWING TOP 32,Purple
+Not in Marchitect,Alexander Suvorov,Siege PvP,NOT IN XWING TOP 32,Purple
+Not in Marchitect,Antara,Ranged PvP,NOT IN XWING TOP 32,Purple
+Not in Marchitect (non-PvP),Charles the Great,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Constantine the Great,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Richard the Lionheart,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Charles Martel,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Flavius Aetius,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Queen Boudica,Defense,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),John I of Portugal,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Arminius,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Cnut the Great,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Jadwiga,Defense,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Skanderbeg,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Margaret I,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Nero,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Harald,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),William Marshal,Defense,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Aethelflaed,Monsters,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Leo III,Defense,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Leonidas I,Defense,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Baldwin IV,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Caesar,Monsters,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Otto the Great,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Stilicho,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Maurice of Nassau,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Mark Antony,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Sulla,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Hammurabi,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Pericles,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Jan Karol Chodkiewicz,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Heraclius,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Sappho,Defense,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Narses,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Justinian I,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Zizka,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Maria Theresa,Monsters,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Stephen the Great,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Michael VIII,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Clovis I,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Guinevere,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Isaac Brock,Defense,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Cimon,Sub City,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Themistocles,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Blanche,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Queen Anne,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Roger II,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Helena,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),John Hawkwood,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Caterina Sforza,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Yolande of Aragon,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Margaret,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Philippa,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Hugh O'Donnell,Duty,OUT OF SCOPE,Europe
+Not in Marchitect (non-PvP),Lincoln,Sub City,OUT OF SCOPE,America
+Not in Marchitect (non-PvP),Nathanael Greene,Monsters,OUT OF SCOPE,America
+Not in Marchitect (non-PvP),Andrew Jackson,Sub City,OUT OF SCOPE,America
+Not in Marchitect (non-PvP),James Bowie,Defense,OUT OF SCOPE,America
+Not in Marchitect (non-PvP),George Dewey,Defense,OUT OF SCOPE,America
+Not in Marchitect (non-PvP),Zachary Taylor,Defense,OUT OF SCOPE,America
+Not in Marchitect (non-PvP),David Farragut,Sub City,OUT OF SCOPE,America
+Not in Marchitect (non-PvP),John Adams,Duty,OUT OF SCOPE,America
+Not in Marchitect (non-PvP),Tokugawa Ieyasu,Sub City,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Honda Tadakatsu,Sub City,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Toyotomi Hideyoshi,Duty,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Kusunoki Masashige,Defense,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Oda Oichi,Defense,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Yodo-dono,Defense,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Hojo Ujiyasu,Sub City,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Takenaka Shigeharu,Defense,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Ono no Imoko,Duty,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Niwa Nagahide,Duty,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),Tachibana Dosetsu,Duty,OUT OF SCOPE,Japan
+Not in Marchitect (non-PvP),King Sejong,Sub City,OUT OF SCOPE,Korea
+Not in Marchitect (non-PvP),Queen Jindeok,Gathering,OUT OF SCOPE,Korea
+Not in Marchitect (non-PvP),Gwon Ryul,Duty,OUT OF SCOPE,Korea
+Not in Marchitect (non-PvP),Yi Sun-sin,Defense,OUT OF SCOPE,Korea
+Not in Marchitect (non-PvP),Eulji Mundeok,Duty,OUT OF SCOPE,Korea
+Not in Marchitect (non-PvP),Empress Wu,Sub City,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Huo Qubing,Monsters,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Ban Chao,Duty,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Wei Qing,Monsters,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Zhuge Liang,Duty,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Zhang Liang,Duty,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Jiang Ziya,Duty,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Liu Bei,Duty,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Zhu Di,Sub City,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Zhou Yu,Defense,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Sun Wu,Duty,OUT OF SCOPE,China
+Not in Marchitect (non-PvP),Catherine II,Sub City,OUT OF SCOPE,Russia
+Not in Marchitect (non-PvP),Dmitry,Defense,OUT OF SCOPE,Russia
+Not in Marchitect (non-PvP),Menshikov,Duty,OUT OF SCOPE,Russia
+Not in Marchitect (non-PvP),Oleg of Novgorod,Duty,OUT OF SCOPE,Russia
+Not in Marchitect (non-PvP),Mikhail Kutuzov,Duty,OUT OF SCOPE,Russia
+Not in Marchitect (non-PvP),Saladin,Sub City,OUT OF SCOPE,Arabia
+Not in Marchitect (non-PvP),Baibars,Monsters,OUT OF SCOPE,Arabia
+Not in Marchitect (non-PvP),Shajar al-Durr,Duty,OUT OF SCOPE,Arabia
+Not in Marchitect (non-PvP),Abd al-Rahman I,Duty,OUT OF SCOPE,Arabia
+Not in Marchitect (non-PvP),Amr ibn al-As,Sub City,OUT OF SCOPE,Arabia
+Not in Marchitect (non-PvP),Pompey,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Seleucus I,Monsters,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Jester,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Amir Timur,Gathering,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Vlad al III,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Empress Dowager Cixi,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Ly Thuong Kiet,Defense,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Tran Hung Dao,Defense,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Askia Muhammad I,Duty,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Mansa Musa,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Ashoka,Duty,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Nordic Barbarian King,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Darius I,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Theodora,Monsters,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Lautaro,Defense,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Gilgamesh,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Pachacuti,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Hera,Duty,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Sargon I,Duty,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Montezuma I,Sub City,OUT OF SCOPE,Other
+Not in Marchitect (non-PvP),Attila,Gathering,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Cleopatra,Monsters,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Hamilcar Barca,Monsters,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Princess Lucy,Gathering,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Spartacus,Monsters,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Undead General,Sub City,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Hernando Cortes,Monsters,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Gaius Marius,Gathering,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Constance I,Gathering,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Jefferson,Sub City,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),John Buford,Monsters,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Uesugi Kenshin,Sub City,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Shimazu Yoshihiro,Gathering,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Sanada Yukimura,Monsters,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Lu Ban,Sub City,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Harun al-Rashid,Sub City,OUT OF SCOPE,Purple
+Not in Marchitect (non-PvP),Trivia Hecate,Duty,OUT OF SCOPE,Purple

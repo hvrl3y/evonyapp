@@ -179,6 +179,7 @@
   td.z{color:var(--dim3)}
   .hi{color:var(--green);font-weight:700} .lo{color:var(--red)}
   .why{font-size:12px;color:var(--dim);margin:5px 6px 0}
+.tb{display:inline-block;min-width:13px;padding:0 3px;margin-right:5px;border-radius:4px;font-size:10px;font-weight:700;text-align:center;color:#000;line-height:14px}.tb.tS{background:#F2B544}.tb.tA{background:#30D158}.tb.tB{background:#0A84FF}.tb.tC{background:#8E8E93;color:#fff}.tb.tD{background:#48484A;color:#fff}
 </style>
 </head>
 <body>
@@ -485,17 +486,21 @@ const gkey=n=>String(n||"").toLowerCase().replace(/[^a-z]/g,"");
 const glev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;
   for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n];};
 function genIndex(){ try{return JSON.parse(localStorage.getItem("evgr2:genIndex")||"[]")}catch(e){return []} }
+let gKeys=null, gKeysFor=null;
 function matchIdx(n,idx){ const k=gkey(n); if(k.length<3) return null;
-  let g=idx.find(x=>gkey(x.n)===k); if(g) return g;
-  g=idx.find(x=>k.length>=8&&gkey(x.n).startsWith(k)); if(g) return g;
-  let best=null,bd=99; idx.forEach(x=>{const d=glev(gkey(x.n),k); if(d<bd){bd=d;best=x}}); return bd<=Math.max(1,Math.floor(k.length/6))?best:null; }
+  if(gKeysFor!==idx){ gKeys=[]; idx.forEach(x=>[x.n,...(x.a||[])].forEach(m=>gKeys.push([gkey(m),x]))); gKeysFor=idx; }
+  let hit=gKeys.find(([kx])=>kx===k); if(hit) return hit[1];
+  if(k.length>=8){ const ps=[...new Set(gKeys.filter(([kx])=>kx.startsWith(k)).map(x=>x[1]))]; if(ps.length===1) return ps[0]; }
+  const ds=new Map(); gKeys.forEach(([kx,x])=>{const d=glev(kx,k); if(!ds.has(x)||d<ds.get(x)) ds.set(x,d);});
+  const [a,b]=[...ds.entries()].sort((x,y)=>x[1]-y[1]);
+  return a&&a[1]<=Math.max(1,Math.floor(k.length/6))&&(!b||b[1]>a[1])?a[0]:null; }
 window.onGenData=d=>{ if(!d||!d.g) return; gscan=d; store.set("gens",JSON.stringify(d)); renderGenerals(); };
 window.onGenScanState=on=>{ gScanning=!!on; renderGenerals(); };
 const starTxt=(s,r)=>{ if(s<0) return '<span class="e">?</span>'; let h=""; for(let i=0;i<5;i++) h+=`<span class="${i<r?"r":i<s?"g":"e"}">★</span>`; return h; };
 function renderGenerals(){
   const out=$("genOut"), gs=gscan&&gscan.g||[], owned=gscan&&gscan.owned>0?gscan.owned:0, idx=genIndex();
   const matched=[], other=[];
-  gs.forEach(x=>{const m=matchIdx(x.n,idx); if(m) matched.push({...x,id:m.id,name:m.n,t:m.t}); else other.push(x);});
+  gs.forEach(x=>{const m=matchIdx(x.n,idx); if(m) matched.push({...x,id:m.id,name:m.n,t:m.t,tier:m.tier||"",xw:m.xw}); else other.push(x);});
   const byType={ground:[],ranged:[],mounted:[],siege:[]}; matched.forEach(x=>byType[x.t]&&byType[x.t].push(x));
   const complete=owned>0&&gs.length>=Math.floor(owned*0.95); // allow for a few missed reads
   let h=`<div class="gh">${glyph("general")}<div class="grow"><b>${gs.length}${owned?` / ${owned}`:""} read</b>
@@ -504,7 +509,7 @@ function renderGenerals(){
     <button class="scan${gScanning?" on":""}" id="genScanBtn">${gScanning?"Stop scan":"Start scan"}</button>`;
   if(gs.length){
     h+=`<div class="gt">${TYPES.map(t=>`<div>${glyph(t)}<b class="c-${t}">${byType[t].length}</b><small>${NAME[t]}</small></div>`).join("")}</div>
-      <div class="gm">${matched.length} attack generals in Marchitect${other.length?` · ${other.length} others`:""}</div>
+      <div class="gm">${matched.length} matched · ${matched.filter(x=>"SAB".includes(x.tier)&&x.tier).length} ranked (S–B)${other.length?` · ${other.length} unknown`:""}</div>
       <button class="sync" id="syncBtn">${gSynced?"Synced ✓ · open Marchitect":"Sync to My Generals"}</button>
       <p class="note" style="margin:5px 2px 0">${complete?`Full scan${gs.length<owned?` (${owned-gs.length} not read)`:""}: generals not read will be marked not owned.`:"Partial scan: only the generals read will be updated."}</p>`;
   }
@@ -515,9 +520,9 @@ function renderGenerals(){
     renderGenerals(); };
   // expanded: your generals by type, then the rest
   let L="";
-  TYPES.forEach(t=>{ const arr=byType[t].slice().sort((a,b)=>b.l-a.l||(b.s+b.r)-(a.s+a.r)); if(!arr.length) return;
-    L+=`<h3>${NAME[t]} · ${arr.length}</h3><div class="card">`+arr.map(x=>`<div class="gl"><span class="nm">${x.name}</span><span class="st">${starTxt(x.s,x.r)}</span><span class="lv">Lv${x.l}</span></div>`).join("")+`</div>`; });
-  if(other.length) L+=`<h3>Other generals · ${other.length}</h3><div class="card"><div class="other">${other.slice().sort((a,b)=>b.l-a.l).map(x=>`${x.n} <span style="opacity:.6">${x.l}</span>`).join(" · ")}</div></div>`;
+  TYPES.forEach(t=>{ const TO="SABCD", arr=byType[t].slice().sort((a,b)=>TO.indexOf(a.tier)-TO.indexOf(b.tier)||b.l-a.l||(b.s+b.r)-(a.s+a.r)); if(!arr.length) return;
+    L+=`<h3>${NAME[t]} · ${arr.length}</h3><div class="card">`+arr.map(x=>`<div class="gl"><span class="nm">${x.tier?`<span class="tb t${x.tier}">${x.tier}</span>`:""}${x.name}</span><span class="st">${starTxt(x.s,x.r)}</span><span class="lv">Lv${x.l}</span></div>`).join("")+`</div>`; });
+  if(other.length) L+=`<h3>Not recognised · ${other.length}</h3><div class="card"><div class="other">${other.slice().sort((a,b)=>b.l-a.l).map(x=>`${x.n} <span style="opacity:.6">${x.l}</span>`).join(" · ")}</div></div>`;
   $("genList").innerHTML=L;
   reportHeight();
 }

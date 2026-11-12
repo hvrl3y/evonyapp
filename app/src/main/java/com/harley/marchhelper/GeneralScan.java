@@ -52,10 +52,20 @@ public class GeneralScan {
             // name: words to the right on the same row, up to "(" (role / status follows)
             StringBuilder name = new StringBuilder();
             int prevR = wd.r;
-            for (ScoutTally.W n : rowRight(words, wd)) {
+            List<ScoutTally.W> row = rowRight(words, wd);
+            for (int i = 0; i < row.size(); i++) {
+                ScoutTally.W n = row.get(i);
                 if (n.l - prevR > wd.h() * 3) break;
                 String t = n.t;
                 int paren = t.indexOf('(');
+                // "Napoleon (Prime)" is part of the name; "( Ground Troop Commander )" is not
+                String after = paren >= 0 ? t.substring(paren + 1) : "";
+                if (paren >= 0 && after.isEmpty() && i + 1 < row.size()) after = row.get(i + 1).t;
+                if (paren >= 0 && after.replaceAll("[^A-Za-z]", "").equalsIgnoreCase("prime")) {
+                    if (paren > 0) name.append(name.length() > 0 ? " " : "").append(t.substring(0, paren).replaceAll("[^A-Za-z.'\\-]", ""));
+                    name.append(" Prime");
+                    break;
+                }
                 if (paren == 0) break;
                 if (paren > 0) t = t.substring(0, paren);
                 t = t.replaceAll("[^A-Za-z0-9.'\\-|]", "");
