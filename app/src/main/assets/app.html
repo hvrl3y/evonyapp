@@ -410,6 +410,8 @@
   /* hide legacy bits */
   .hero, .gtitle, .tabs { display: none !important; }
 
+  .pair .own { display: block; font-size: 12px; font-weight: 600; margin-top: 2px; white-space: normal; }
+  .pair .own.y { color: #30D158; } .pair .own.n { color: #FF9F0A; }
 </style>
 </head>
 <body>
@@ -697,7 +699,7 @@ let state = {
   tab: 'rank', role: store.get('role', 'soloAttack'), troopType: store.get('troopType', 'mounted'),
   account: deepMerge(clone(DEFAULT_ACCOUNT), store.get('account', {})),
   roster: deepMerge(clone(DEFAULT_ROSTER), store.get('roster', {})),
-  open: null, search: '', rankSearch: '', page: 'home',
+  open: null, search: '', rankSearch: '', page: 'home', rankScope: store.get('rankScope', 'mine'),
 };
 function save() { store.set('troopType', state.troopType); store.set('role', state.role); store.set('account', state.account); store.set('roster', state.roster); }
 
@@ -727,8 +729,16 @@ function ownedRoster(extraId) {
   return roster;
 }
 function computeRanking() {
-  return rankRoster(GENS, ownedRoster(), accountFor(state.troopType), state.role);
+  return rankRoster(GENS, state.rankScope === 'all' ? allRoster() : ownedRoster(), accountFor(state.troopType), state.role);
 }
+// Every general, owned or not (unowned ones at their saved / default level and stars)
+function allRoster() {
+  const roster = {};
+  for (const [id, r] of Object.entries(state.roster)) roster[id] = { level: r.level, stars: r.stars, redStars: r.redStars, attrBonus: 500 };
+  return roster;
+}
+const GEN_BY_NAME = Object.fromEntries(GENS.map(g => [g.name, g]));
+const ownsName = n => { const g = GEN_BY_NAME[n]; return !g || !!state.roster[g.id]?.owned; };
 
 function renderRank() {
   const res = computeRanking();
@@ -741,7 +751,8 @@ function renderRank() {
   const worst = shown.length ? shown[shown.length - 1].r.score : best, top = shown.length ? shown[0].r.score : best;
   const span = Math.max(1, top - worst);
   const w = state.account.weights[state.role];
-  const search = `<div class="row" style="margin-top:10px"><span class="sicon">${ic('search')}</span><input type="search" id="rankSearch" placeholder="Filter by main general…" value="${esc(state.rankSearch)}" autocomplete="off"></div>`;
+  const scope = `<div class="seg" style="margin-top:10px"><button data-act="rankscope" data-v="mine" class="${state.rankScope !== 'all' ? 'on' : ''}">My generals</button><button data-act="rankscope" data-v="all" class="${state.rankScope === 'all' ? 'on' : ''}">All generals</button></div>`;
+  const search = scope + `<div class="row" style="margin-top:10px"><span class="sicon">${ic('search')}</span><input type="search" id="rankSearch" placeholder="Filter by main general…" value="${esc(state.rankSearch)}" autocomplete="off"></div>`;
   let html = search + `<div class="note">${q ? `${ranked.filter(x => x.r.main.toLowerCase().includes(q)).length} pairs with a main matching "${esc(state.rankSearch.trim())}" · ranks are overall` : `${res.length} pairs`} from ${owned} generals · weighting ${Math.round(w * 100)}% offense / ${Math.round((1 - w) * 100)}% durability · tap a row for the breakdown`;
   if (res.some(r => r.unverified)) html += `<br><b>${ic('warn')} Buff conditions not yet verified</b> — role rankings will sharpen once skills are tagged from in-game text.`;
   html += `</div><div class="list">`;
@@ -753,7 +764,7 @@ function renderRank() {
     html += `<div class="item ${state.open === key ? 'open' : ''}" data-key="${esc(key)}">
       <div class="line">
         <span class="rk ${i < 3 ? 'top m' + (i + 1) : ''}">${i === 0 ? ic('crown') : i < 3 ? ic('medal') : ''}${i + 1}</span>
-        <span class="pair"><span class="m">${q ? hl(r.main, q) : esc(r.main)}</span><span class="a">+ ${esc(r.assistant)}</span></span>
+        <span class="pair"><span class="m">${q ? hl(r.main, q) : esc(r.main)}</span><span class="a">+ ${esc(r.assistant)}</span>${state.rankScope === 'all' ? ((ownsName(r.main) && ownsName(r.assistant)) ? '<span class="own y">✓ Owned</span>' : `<span class="own n">Missing ${[r.main, r.assistant].filter(n => !ownsName(n)).map(esc).join(' + ')}</span>`) : ''}</span>
         <span class="sc"><span class="score">${fmtBig(r.score)}</span><span class="pct">${gap || 'best'}</span></span>
       </div>
       <div class="bar"><i style="width:${(4 + 96 * (r.score - worst) / span).toFixed(1)}%"></i></div>
@@ -1045,6 +1056,7 @@ document.addEventListener('click', e => {
   if (t.dataset.done !== undefined) { state.t.daily.done[t.dataset.done] = t.checked; saveT(); t.nextElementSibling?.classList.toggle('doneTxt', t.checked); return refreshOut(); }
   if (t.dataset.k && t.type === 'checkbox') { setK(t.dataset.k, t.checked); saveT(); return refreshOut(); }
   if (t.dataset.copy) { try { navigator.clipboard.writeText(t.dataset.copy).then(() => { t.textContent = 'Copied ✓'; }, () => { t.textContent = 'Copy blocked — select text below'; }); } catch { t.textContent = 'Copy not available'; } return; }
+  if (t.dataset.act === 'rankscope') { state.rankScope = t.dataset.v; store.set('rankScope', state.rankScope); return render(); }
   if (t.dataset.act === 'battle-mine') {
     const B = state.t.battle, bp = bestPair(B.a.type, 'soloAttack');
     if (bp) { B.a.atk = Math.round(bp.totals.attack * 100); B.a.def = Math.round(bp.totals.defense * 100); B.a.hp = Math.round(bp.totals.hp * 100); B.a.count = myMarch(); B.d.count = B.a.count; }
@@ -1580,8 +1592,32 @@ render();
           datk:Math.round(Math.abs(D.attack||0)*100), ddef:Math.round(Math.abs(D.defense||0)*100), dhp:Math.round(Math.abs(D.hp||0)*100),
           main:bp.main, asst:bp.assistant, troops:bp.troops||0}; });
       localStorage.setItem('evgr2:fromApp', JSON.stringify(out));
+      localStorage.setItem('evgr2:genIndex', JSON.stringify(GENS.map(g=>({id:g.id,n:g.name,t:g.troopType}))));
     }catch(e){}
   }
+  // Apply a generals scan from the overlay to My Generals
+  const key=n=>String(n||'').toLowerCase().replace(/[^a-z]/g,'');
+  const lev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;
+    for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n];};
+  const matchGen=n=>{const k=key(n); if(k.length<3) return null;
+    let g=GENS.find(x=>key(x.name)===k); if(g) return g;
+    g=GENS.find(x=>k.length>=8&&key(x.name).startsWith(k)); if(g) return g;
+    let best=null,bd=99; GENS.forEach(x=>{const kx=key(x.name),d=lev(kx,k); if(d<bd){bd=d;best=x}}); return bd<=Math.max(1,Math.floor(k.length/6))?best:null;};
+  function applyScan(){
+    try{
+      const A=JSON.parse(localStorage.getItem('evgr2:genApply')||'null'); if(!A||!A.g) return;
+      if((store.get('genApplied',0)||0)>=A.ts) return;
+      const seen=new Set();
+      A.g.forEach(x=>{const g=matchGen(x.n); if(!g) return; seen.add(g.id); const r=state.roster[g.id];
+        r.owned=true; if(x.l>0) r.level=x.l; if(x.s>=0){ r.stars=x.s; r.redStars=Math.max(0,x.r); } });
+      if(A.complete) GENS.forEach(g=>{ if(!seen.has(g.id)) state.roster[g.id].owned=false; });
+      store.set('genApplied',A.ts); save(); render();
+    }catch(e){}
+  }
+  applyScan();
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) applyScan(); });
+  window.addEventListener('focus',applyScan);
+  window.addEventListener('storage',e=>{ if(e.key==='evgr2:genApply') applyScan(); });
   const set0=store.set; let t=null;
   store.set=function(k,v){ set0.call(store,k,v); clearTimeout(t); t=setTimeout(publish,300); };
   setTimeout(publish,500);

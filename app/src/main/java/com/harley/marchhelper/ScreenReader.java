@@ -39,6 +39,9 @@ public class ScreenReader {
 
         /** Called with your own troops (JSON) while "Scan my troops" is on. */
         void onMine(String json);
+
+        /** Called with the generals read so far (JSON) while the generals scan is on. */
+        void onGenerals(String json);
     }
 
     private static final long INTERVAL_MS = 1500;
@@ -63,6 +66,16 @@ public class ScreenReader {
     private final ScoutTally tally = new ScoutTally();
     private final ScoutTally mine = new ScoutTally(Long.MAX_VALUE / 4);
     private volatile boolean mineScan = false;
+    private final GeneralScan gens = new GeneralScan();
+    private volatile boolean genScan = false;
+
+    /** Read your generals from the in-game Generals list (Detail mode) while you scroll it. */
+    public void setGenScan(boolean on) {
+        handler.post(() -> {
+            if (on && !genScan) gens.reset();
+            genScan = on;
+        });
+    }
 
     /** Read your own troop list (any screen with "Lv## name count" rows that isn't a scout report). */
     public void setMineScan(boolean on) {
@@ -133,7 +146,7 @@ public class ScreenReader {
                 }
             } catch (Exception ignored) {
             }
-            handler.postDelayed(this, mineScan || tally.isActive(System.currentTimeMillis()) ? FAST_MS : INTERVAL_MS);
+            handler.postDelayed(this, mineScan || genScan || tally.isActive(System.currentTimeMillis()) ? FAST_MS : INTERVAL_MS);
         }
     };
 
@@ -154,15 +167,37 @@ public class ScreenReader {
     private void recognize(Bitmap bmp) {
         busy = true;
         recognizer.process(InputImage.fromBitmap(bmp, 0))
-                .addOnSuccessListener(text -> handler.post(() -> parse(text)))
-                .addOnCompleteListener(t -> {
-                    busy = false;
+                // keep the frame until parse() is done: the generals scan reads star colours from it
+                .addOnSuccessListener(text -> handler.post(() -> {
+                    try { parse(text, bmp); } catch (Exception ignored) { }
                     bmp.recycle();
-                });
+                    busy = false;
+                }))
+                .addOnFailureListener(e -> { bmp.recycle(); busy = false; });
     }
 
-    private void parse(Text text) {
+    private List<ScoutTally.W> words(Text text) {
+        List<ScoutTally.W> ws = new ArrayList<>();
+        for (Text.TextBlock b : text.getTextBlocks())
+            for (Text.Line l : b.getLines())
+                for (Text.Element e : l.getElements()) {
+                    Rect r = e.getBoundingBox();
+                    if (r != null) ws.add(new ScoutTally.W(e.getText(), r.left, r.top, r.right, r.bottom));
+                }
+        return ws;
+    }
+
+    private void parse(Text text, Bitmap bmp) {
         String all = text.getText().toLowerCase(Locale.US);
+        if (genScan && all.contains("leadership")) {
+            int w = bmp.getWidth(), h = bmp.getHeight();
+            int[] px = new int[w * h];
+            bmp.getPixels(px, 0, w, 0, 0, w, h);
+            int[] owned = {-1};
+            List<GeneralScan.Seen> seen = GeneralScan.extract(words(text), px, w, h, owned);
+            if (gens.feed(seen, owned[0])) listener.onGenerals(gens.toJson());
+            return;
+        }
         boolean scout = all.contains("scout report") || all.contains("scout");
         if (mineScan && !scout) {
             List<ScoutTally.W> ws = new ArrayList<>();

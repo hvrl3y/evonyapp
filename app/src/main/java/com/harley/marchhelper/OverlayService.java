@@ -78,7 +78,7 @@ public class OverlayService extends Service {
     private LinearLayout menu;
     private WindowManager.LayoutParams menuLp;
     private boolean menuShown = false;
-    private View menuLayers, menuScout, menuMuster;
+    private View menuLayers, menuScout, menuMuster, menuGenerals;
 
     // panel
     private LinearLayout panel;
@@ -87,7 +87,7 @@ public class OverlayService extends Service {
     private TextView title, expandBtn;
     private boolean panelShown = false;
     private boolean keyboard = false;
-    private String view = "layers";           // layers | scout | muster
+    private String view = "layers";           // layers | scout | muster | generals
     private boolean expanded = false;
     private int contentHeightDp = 200;
 
@@ -114,7 +114,7 @@ public class OverlayService extends Service {
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         prefs = getSharedPreferences("overlay", MODE_PRIVATE);
         view = prefs.getString("view", "layers");
-        if (!view.equals("scout") && !view.equals("muster")) view = "layers";
+        if (!view.matches("scout|muster|generals")) view = "layers";
         expanded = prefs.getBoolean("exp_" + view, false);
         goForeground(false);
         createBubble();
@@ -207,6 +207,11 @@ public class OverlayService extends Service {
                         lastMax = max;
                         js("window.onMarchRead&&onMarchRead(" + max + "," + sel + ")");
                     });
+                }
+
+                @Override
+                public void onGenerals(String json) {
+                    main.post(() -> js("window.onGenData&&onGenData(" + json + ")"));
                 }
 
                 @Override
@@ -354,6 +359,11 @@ public class OverlayService extends Service {
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         gap2.topMargin = dp(4);
         menu.addView(menuMuster, gap2);
+        menuGenerals = menuItem(R.drawable.badge_generals, "Generals", "generals");
+        LinearLayout.LayoutParams gap3 = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        gap3.topMargin = dp(4);
+        menu.addView(menuGenerals, gap3);
         menuLp = overlayParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     }
 
@@ -380,9 +390,9 @@ public class OverlayService extends Service {
     }
 
     private void paintMenu() {
-        for (View v : new View[]{menuLayers, menuScout, menuMuster}) {
+        for (View v : new View[]{menuLayers, menuScout, menuMuster, menuGenerals}) {
             boolean on = panelShown && ((v == menuLayers && view.equals("layers")) || (v == menuScout && view.equals("scout"))
-                    || (v == menuMuster && view.equals("muster")));
+                    || (v == menuMuster && view.equals("muster")) || (v == menuGenerals && view.equals("generals")));
             GradientDrawable bg = new GradientDrawable();
             bg.setColor(on ? Color.parseColor("#2EF2B544") : Color.TRANSPARENT);
             if (on) bg.setStroke(dp(1), C_TINT);
@@ -562,7 +572,7 @@ public class OverlayService extends Service {
     }
 
     private void paintHeader() {
-        title.setText(view.equals("scout") ? "Scout" : view.equals("muster") ? "Muster" : "Layers");
+        title.setText(view.equals("scout") ? "Scout" : view.equals("muster") ? "Muster" : view.equals("generals") ? "Generals" : "Layers");
         expandBtn.setRotation(expanded ? -90 : 90);
     }
 
@@ -719,6 +729,15 @@ public class OverlayService extends Service {
         @JavascriptInterface
         public void wantKeyboard(boolean on) {
             main.post(() -> setKeyboard(on));
+        }
+
+        @JavascriptInterface
+        public void setGenScan(boolean on) {
+            main.post(() -> {
+                if (reader == null) { if (on) requestCapture(); js("window.onGenScanState&&onGenScanState(false)"); return; }
+                reader.setGenScan(on);
+                js("window.onGenScanState&&onGenScanState(" + on + ")");
+            });
         }
 
         @JavascriptInterface

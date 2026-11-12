@@ -96,6 +96,27 @@
   .mu.close .v{color:#FF9F0A}
   .mu .need{font-size:11.5px;color:var(--dim)}
 
+  /* ---------- GENERALS ---------- */
+  .gh{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .gh .ic{width:22px;height:22px} .gh .grow{flex:1;min-width:0}
+  .gh b{font:700 16px/1.1 -apple-system,system-ui,Roboto,sans-serif;display:block}
+  .gh .sub{font-size:10.5px;color:var(--dim)}
+  .gt{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:6px 0}
+  .gt div{background:var(--card);border-radius:7px;padding:5px 2px;text-align:center}
+  .gt .ic{width:20px;height:20px;display:block;margin:0 auto 2px}
+  .gt b{font:700 15px/1 -apple-system,system-ui,Roboto,sans-serif}
+  .gt small{display:block;font-size:9.5px;color:var(--dim);margin-top:2px}
+  .gm{font-size:11.5px;color:var(--dim);margin:2px 2px 6px}
+  .sync{display:block;width:100%;background:var(--tint);color:#000;border:0;border-radius:8px;padding:8px;font:600 13px/1.2 -apple-system,system-ui,Roboto,sans-serif}
+  .sync:disabled{opacity:.4}
+  .gl{display:flex;align-items:center;gap:6px;padding:4px 7px;position:relative;font-size:12.5px}
+  .gl+.gl::before{content:"";position:absolute;top:0;left:7px;right:0;height:.5px;background:var(--line)}
+  .gl .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gl .lv{color:var(--dim);font-variant-numeric:tabular-nums;width:34px;text-align:right}
+  .gl .st{font-size:10px;letter-spacing:0;width:62px;text-align:right;margin-right:4px}
+  .st .g{color:#FFD60A} .st .r{color:#FF453A} .st .e{color:#3A3A3C}
+  .other{font-size:11.5px;color:var(--dim);line-height:16px;padding:6px 7px}
+
   /* ---------- SCOUT ---------- */
   .vt{display:flex;flex-direction:column;gap:3px}
   .vt .tot{display:flex;align-items:center;gap:5px}
@@ -214,6 +235,12 @@
     </div>
   </section>
 
+  <!-- ===== GENERALS ===== -->
+  <section id="v-generals" class="hide">
+    <div id="genOut"></div>
+    <div class="x"><div id="genList"></div></div>
+  </section>
+
   <!-- ===== SCOUT ===== -->
   <section id="v-scout" class="hide">
     <div id="scoutOut"></div>
@@ -252,15 +279,16 @@ const short=n=>n>=1e9?sig(n/1e9)+"B":n>=1e6?sig(n/1e6)+"M":n>=1e3?sig(n/1e3)+"K"
 const native=window.Overlay||null;
 
 /* ---------- view: layers / counter, compact / expanded (set by native) ---------- */
-let view=["scout","muster"].includes(store.get("view","layers"))?store.get("view","layers"):"layers", expanded=false;
+let view=["scout","muster","generals"].includes(store.get("view","layers"))?store.get("view","layers"):"layers", expanded=false;
 function apply(){
   $("v-layers").classList.toggle("hide",view!=="layers");
   $("v-scout").classList.toggle("hide",view!=="scout");
   $("v-muster").classList.toggle("hide",view!=="muster");
+  $("v-generals").classList.toggle("hide",view!=="generals");
   document.querySelectorAll(".x").forEach(e=>e.classList.toggle("hide",!expanded));
   reportHeight();
 }
-window.setView=(v,exp)=>{view=["scout","muster"].includes(v)?v:"layers";expanded=!!exp;store.set("view",view);apply();renderScout();renderMuster()};
+window.setView=(v,exp)=>{view=["scout","muster","generals"].includes(v)?v:"layers";expanded=!!exp;store.set("view",view);apply();renderScout();renderMuster();renderGenerals()};
 function reportHeight(){
   if(!native||!native.setContentHeight) return;
   requestAnimationFrame(()=>native.setContentHeight(Math.ceil($("app").getBoundingClientRect().height)));
@@ -450,6 +478,50 @@ function renderMatchup(){
   el.innerHTML=h;
 }
 
+/* ================= GENERALS (scan your Generals list into Marchitect) ================= */
+let gscan=null, gScanning=false, gSynced=0;
+try{gscan=JSON.parse(store.get("gens","null"))}catch(e){}
+const gkey=n=>String(n||"").toLowerCase().replace(/[^a-z]/g,"");
+const glev=(a,b)=>{const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n];};
+function genIndex(){ try{return JSON.parse(localStorage.getItem("evgr2:genIndex")||"[]")}catch(e){return []} }
+function matchIdx(n,idx){ const k=gkey(n); if(k.length<3) return null;
+  let g=idx.find(x=>gkey(x.n)===k); if(g) return g;
+  g=idx.find(x=>k.length>=8&&gkey(x.n).startsWith(k)); if(g) return g;
+  let best=null,bd=99; idx.forEach(x=>{const d=glev(gkey(x.n),k); if(d<bd){bd=d;best=x}}); return bd<=Math.max(1,Math.floor(k.length/6))?best:null; }
+window.onGenData=d=>{ if(!d||!d.g) return; gscan=d; store.set("gens",JSON.stringify(d)); renderGenerals(); };
+window.onGenScanState=on=>{ gScanning=!!on; renderGenerals(); };
+const starTxt=(s,r)=>{ if(s<0) return '<span class="e">?</span>'; let h=""; for(let i=0;i<5;i++) h+=`<span class="${i<r?"r":i<s?"g":"e"}">★</span>`; return h; };
+function renderGenerals(){
+  const out=$("genOut"), gs=gscan&&gscan.g||[], owned=gscan&&gscan.owned>0?gscan.owned:0, idx=genIndex();
+  const matched=[], other=[];
+  gs.forEach(x=>{const m=matchIdx(x.n,idx); if(m) matched.push({...x,id:m.id,name:m.n,t:m.t}); else other.push(x);});
+  const byType={ground:[],ranged:[],mounted:[],siege:[]}; matched.forEach(x=>byType[x.t]&&byType[x.t].push(x));
+  const complete=owned>0&&gs.length>=Math.floor(owned*0.95); // allow for a few missed reads
+  let h=`<div class="gh">${glyph("general")}<div class="grow"><b>${gs.length}${owned?` / ${owned}`:""} read</b>
+    <div class="sub">${gScanning?"Scanning… scroll your Generals list (Detail view)":gs.length?(complete?"Every general read":"Scroll further to read the rest"):"Open Generals in Detail view, then scan"}</div></div>
+    ${gScanning?'<span class="dot on"></span>':""}</div>
+    <button class="scan${gScanning?" on":""}" id="genScanBtn">${gScanning?"Stop scan":"Start scan"}</button>`;
+  if(gs.length){
+    h+=`<div class="gt">${TYPES.map(t=>`<div>${glyph(t)}<b class="c-${t}">${byType[t].length}</b><small>${NAME[t]}</small></div>`).join("")}</div>
+      <div class="gm">${matched.length} attack generals in Marchitect${other.length?` · ${other.length} others`:""}</div>
+      <button class="sync" id="syncBtn">${gSynced?"Synced ✓ · open Marchitect":"Sync to My Generals"}</button>
+      <p class="note" style="margin:5px 2px 0">${complete?`Full scan${gs.length<owned?` (${owned-gs.length} not read)`:""}: generals not read will be marked not owned.`:"Partial scan: only the generals read will be updated."}</p>`;
+  }
+  out.innerHTML=h;
+  $("genScanBtn").onclick=()=>{ if(native&&native.setGenScan) native.setGenScan(!gScanning); else onGenScanState(!gScanning); };
+  const sb=$("syncBtn"); if(sb) sb.onclick=()=>{
+    try{ localStorage.setItem("evgr2:genApply",JSON.stringify({ts:Date.now(),g:gs,complete})); gSynced=Date.now(); }catch(e){}
+    renderGenerals(); };
+  // expanded: your generals by type, then the rest
+  let L="";
+  TYPES.forEach(t=>{ const arr=byType[t].slice().sort((a,b)=>b.l-a.l||(b.s+b.r)-(a.s+a.r)); if(!arr.length) return;
+    L+=`<h3>${NAME[t]} · ${arr.length}</h3><div class="card">`+arr.map(x=>`<div class="gl"><span class="nm">${x.name}</span><span class="st">${starTxt(x.s,x.r)}</span><span class="lv">Lv${x.l}</span></div>`).join("")+`</div>`; });
+  if(other.length) L+=`<h3>Other generals · ${other.length}</h3><div class="card"><div class="other">${other.slice().sort((a,b)=>b.l-a.l).map(x=>`${x.n} <span style="opacity:.6">${x.l}</span>`).join(" · ")}</div></div>`;
+  $("genList").innerHTML=L;
+  reportHeight();
+}
+
 /* ================= SCOUT ================= */
 // scout = {session, total, e:[{n:name, t:type, r:tier, c:count}]}, built natively without double counting
 let scout=null, scoutAt=0; try{const s=JSON.parse(store.get("scout3","null")); if(s){scout=s.d; scoutAt=s.at}}catch(e){}
@@ -562,7 +634,7 @@ setInterval(()=>{ if(view==="scout"&&scout) renderScout(); },4000);
 
 if(native&&native.isAutoRead){ autoOn=native.isAutoRead(); }
 if(!Object.keys(mu.buffs).length) pullFromApp(true);
-paintAuto(); calc(); renderScout(); renderMuster(); apply();
+paintAuto(); calc(); renderScout(); renderMuster(); renderGenerals(); apply();
 window.addEventListener("storage",e=>{ if(e.key==="evgr2:fromApp"&&mu.src!=="manual") pullFromApp(true); });
 window.addEventListener("load",reportHeight);
 document.querySelectorAll("img").forEach(i=>i.addEventListener("load",reportHeight));
