@@ -1668,6 +1668,76 @@ document.addEventListener('input', ev => {
 render();
 </script>
 <script>
+/* ===== Protect My Generals from accidental bulk changes =====
+   - All / None need a second tap to confirm.
+   - Every bulk change (All, None, scan sync) saves a restore point first and shows an Undo bar.
+   - My Generals lists the last 10 restore points and can re-apply the last synced scan. */
+const SNAP_MAX = 10;
+const ownedCount = () => LIB.filter(libOwned).length;
+function snapshot(label) {
+  const snaps = store.get('snapshots', []);
+  snaps.unshift({ ts: Date.now(), label, n: ownedCount(), roster: clone(state.roster), lib: clone(state.lib) });
+  store.set('snapshots', snaps.slice(0, SNAP_MAX));
+}
+function restoreSnap(i) {
+  const snaps = store.get('snapshots', []), sn = snaps[i]; if (!sn) return;
+  snapshot('Before restoring');                       // so a restore can be undone too
+  for (const [id, r] of Object.entries(sn.roster)) if (state.roster[id]) Object.assign(state.roster[id], r);
+  state.lib = clone(sn.lib || {}); saveLib(); save(); render();
+  toast(`Restored ${sn.n} owned generals`, null);
+}
+let toastT = null;
+function toast(msg, undoable) {
+  let el = document.getElementById('undoBar');
+  if (!el) { el = document.createElement('div'); el.id = 'undoBar'; document.body.appendChild(el); }
+  el.innerHTML = `<span>${esc(msg)}</span>${undoable ? '<button data-undo="1">Undo</button>' : ''}`;
+  el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 9000);
+}
+(function () {
+  const css = document.createElement('style');
+  css.textContent = `#undoBar{position:fixed;left:12px;right:12px;bottom:calc(128px + env(safe-area-inset-bottom));z-index:60;display:flex;align-items:center;gap:10px;justify-content:space-between;
+    background:#2C2C2E;color:#fff;border-radius:14px;padding:12px 14px;font:500 15px/1.3 -apple-system,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);
+    transform:translateY(20px);opacity:0;pointer-events:none;transition:.2s}#undoBar.on{transform:none;opacity:1;pointer-events:auto}
+    #undoBar button{border:0;background:none;color:#F2B544;font:700 15px/1 -apple-system,system-ui,sans-serif;padding:4px 2px}
+    .btn.arm{background:#FF453A!important;color:#fff!important}
+    .snap{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}.snap:first-child{border-top:0}
+    .snap span{flex:1;font-size:14px}.snap small{display:block;color:var(--dim,#8E8E93);font-size:12px}`;
+  document.head.appendChild(css);
+})();
+const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : new Date(ts).toLocaleDateString(); };
+function renderSafety() {
+  const snaps = store.get('snapshots', []);
+  let last = null; try { last = JSON.parse(localStorage.getItem('evgr2:genApply') || 'null'); } catch {}
+  let h = `<div class="grp" style="margin-top:18px"><h3>${ic('timer')}Restore points</h3><div class="list">`;
+  if (last && last.g) h += `<div class="snap"><span>Last synced scan<small>${last.g.length} generals read · ${ago(last.ts)}</small></span><button class="btn" data-reapply="1">Re-apply</button></div>`;
+  snaps.forEach((sn, i) => { h += `<div class="snap"><span>${esc(sn.label)}<small>${sn.n} owned · ${ago(sn.ts)}</small></span><button class="btn" data-restore="${i}">Restore</button></div>`; });
+  if (!snaps.length && !(last && last.g)) h += `<div class="snap"><span><small>A restore point is saved automatically before every All, None or scan sync.</small></span></div>`;
+  return h + `</div></div>`;
+}
+const _rr2 = renderRoster;
+renderRoster = function () { return _rr2() + renderSafety(); };
+
+let armed = null, armT = null;
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-act="all"],[data-act="none"],[data-undo],[data-restore],[data-reapply]'); if (!t) return;
+  if (t.dataset.undo) { ev.stopImmediatePropagation(); document.getElementById('undoBar').classList.remove('on'); return restoreSnap(0); }
+  if (t.dataset.restore) { ev.stopImmediatePropagation(); return restoreSnap(+t.dataset.restore); }
+  if (t.dataset.reapply) { ev.stopImmediatePropagation(); return window.marchitectApplyScan && window.marchitectApplyScan(true); }
+  // All / None: first tap arms, second tap (within 4s) does it
+  const act = t.dataset.act;
+  if (armed !== act) {
+    ev.stopImmediatePropagation(); armed = act; clearTimeout(armT);
+    document.querySelectorAll('.btn.arm').forEach(b => b.classList.remove('arm'));
+    t.classList.add('arm'); t.lastChild.textContent = act === 'all' ? 'Tick all?' : 'Untick all?';
+    armT = setTimeout(() => { armed = null; render(); }, 4000);
+    return;
+  }
+  armed = null; clearTimeout(armT);
+  snapshot(`Before ${act === 'all' ? 'ticking' : 'unticking'} all ${TLABEL[state.troopType]}`);
+  setTimeout(() => toast(`${act === 'all' ? 'Ticked' : 'Unticked'} all ${TLABEL[state.troopType]} generals`, true), 0);
+}, true);
+</script>
+<script>
 /* ===== Marchitect app <-> overlay bridge (Android) =====
    Publishes your best attack pair's buffs per troop type and your march size to shared
    storage, so the overlay's Muster and Matchup use exactly what Marchitect calculates. */
@@ -1697,21 +1767,24 @@ render();
     const ds=new Map(); KEYS.forEach(([kx,e])=>{const d=lev(kx,k); if(!ds.has(e)||d<ds.get(e)) ds.set(e,d);});
     const [a,b]=[...ds.entries()].sort((x,y)=>x[1]-y[1]);
     return a && a[1]<=Math.max(1,Math.floor(k.length/6)) && (!b||b[1]>a[1]) ? a[0] : null;};
-  function applyScan(){
+  function applyScan(force){
     try{
       const A=JSON.parse(localStorage.getItem('evgr2:genApply')||'null'); if(!A||!A.g) return;
-      if((store.get('genApplied',0)||0)>=A.ts) return;
+      if(force!==true&&(store.get('genApplied',0)||0)>=A.ts) return;
+      snapshot(force===true?'Before re-applying scan':'Before scan sync');
       const seen=new Set();
       A.g.forEach(x=>{const e=matchGen(x.n); if(!e) return; seen.add(e.id);
         if(e.xw){ const r=state.roster[e.id]; r.owned=true; if(x.l>0) r.level=x.l; if(x.s>=0){ r.stars=x.s; r.redStars=Math.max(0,x.r); } }
         else { const r=state.lib[e.id]||(state.lib[e.id]={}); r.owned=true; if(x.l>0) r.l=x.l; if(x.s>=0){ r.s=x.s; r.r=Math.max(0,x.r); } } });
       if(A.complete) LIB.forEach(e=>{ if(seen.has(e.id)) return; if(e.xw) state.roster[e.id].owned=false; else if(state.lib[e.id]) state.lib[e.id].owned=false; });
       store.set('genApplied',A.ts); saveLib(); save(); render();
+      toast(`Scan synced: ${seen.size} generals owned`, true);
     }catch(e){}
   }
+  window.marchitectApplyScan=applyScan;
   applyScan();
   document.addEventListener('visibilitychange',()=>{ if(!document.hidden) applyScan(); });
-  window.addEventListener('focus',applyScan);
+  window.addEventListener('focus',()=>applyScan());
   window.addEventListener('storage',e=>{ if(e.key==='evgr2:genApply') applyScan(); });
   const set0=store.set; let t=null;
   store.set=function(k,v){ set0.call(store,k,v); clearTimeout(t); t=setTimeout(publish,300); };
