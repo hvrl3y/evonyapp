@@ -9,131 +9,111 @@
     --bg:#000; --card:#1C1C1E; --card2:#2C2C2E; --fill:rgba(118,118,128,.24); --fill2:rgba(118,118,128,.18);
     --text:#fff; --dim:rgba(235,235,245,.6); --dim3:rgba(235,235,245,.3); --line:rgba(84,84,88,.65);
     --tint:#F2B544; --tint-dim:rgba(242,181,68,.18); --red:#FF453A; --green:#30D158;
-    --ground:#AC8E68; --ranged:#30D158; --mounted:#FF6961; --siege:#98989D;
+    --ground:#C8A27A; --ranged:#30D158; --mounted:#FF6961; --siege:#9EA3AD;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--text);
-    font:14px/1.25 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;letter-spacing:-.2px;-webkit-user-select:none;user-select:none}
+    font:13.5px/1.25 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;letter-spacing:-.15px;-webkit-user-select:none;user-select:none}
   input{-webkit-user-select:text;user-select:text}
-  #app{padding:6px 8px 8px}
+  #app{padding:6px 7px 7px}
   .hide{display:none!important}
   .ic{width:18px;height:18px;object-fit:contain;flex:none}
+  .num{font-variant-numeric:tabular-nums}
+  .c-ground{color:var(--ground)} .c-ranged{color:var(--ranged)} .c-mounted{color:var(--mounted)} .c-siege{color:var(--siege)}
+  .b-ground{background:var(--ground)} .b-ranged{background:var(--ranged)} .b-mounted{background:var(--mounted)} .b-siege{background:var(--siege)}
 
-  /* ---------- SMALL: numbers only, see-through ---------- */
-  html.m-s,body.m-s{background:transparent}
-  body.m-s #app{padding:3px 7px 5px}
-  .sm .r{display:flex;justify-content:space-between;gap:8px;padding:1.5px 0;font-variant-numeric:tabular-nums;
-    text-shadow:0 1px 2px #000,0 0 4px #000}
-  .sm .r b{color:var(--tint);font-weight:700}
-  .sm .r span{font-weight:700}
-  .sm .r.lo b,.sm .r.lo span{color:rgba(235,235,245,.75);font-weight:600;font-size:12.5px}
-  .sm .none{color:var(--dim);font-size:12px;text-shadow:0 1px 2px #000}
-
-  /* ---------- segmented control (iOS) ---------- */
-  .seg{display:flex;background:var(--fill);border-radius:8px;padding:2px}
-  .seg button{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:none;border:0;color:var(--text);
-    font:500 12px/1 -apple-system,system-ui,Roboto,sans-serif;padding:5px 2px;border-radius:6px;position:relative;min-height:26px}
+  .seg{display:flex;background:var(--fill);border-radius:7px;padding:2px}
+  .seg button{flex:1;display:flex;align-items:center;justify-content:center;background:none;border:0;color:var(--text);
+    font:500 11.5px/1 -apple-system,system-ui,Roboto,sans-serif;padding:3px 1px;border-radius:5px;position:relative;min-height:24px}
   .seg button+button::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:.5px;background:rgba(142,142,147,.4)}
   .seg button.on{background:#636366;font-weight:600}
   .seg button.on::before,.seg button.on+button::before{display:none}
+  .seg .ic{width:17px;height:17px}
 
-  /* ---------- MEDIUM core ---------- */
-  .ms{display:flex;align-items:center;gap:6px;margin-bottom:6px}
-  .ms .ic{width:22px;height:22px}
-  .ms .grow{flex:1;min-width:0}
-  .ms .lab{font-size:10.5px;color:var(--dim);text-transform:uppercase;display:flex;align-items:center;gap:4px}
-  .dot{width:6px;height:6px;border-radius:50%;background:var(--dim3);display:inline-block}
-  .dot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
-  .ms input{display:block;width:100%;background:none;border:0;color:var(--text);padding:0;
-    font:700 19px/1.15 -apple-system,system-ui,Roboto,sans-serif;font-variant-numeric:tabular-nums}
+  .card{background:var(--card);border-radius:8px;overflow:hidden}
+  .empty{color:var(--dim);font-size:12px;padding:8px;text-align:center;line-height:16px}
+  h3{margin:10px 0 4px 6px;font-size:10.5px;font-weight:400;text-transform:uppercase;color:var(--dim)}
+  .note{color:var(--dim);font-size:11px;line-height:14px;margin:5px 6px 0}
+
+  /* ---------- LAYERS ---------- */
+  .ms{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+  .ms .ic{width:20px;height:20px}
+  .ms input{flex:1;min-width:0;background:none;border:0;color:var(--text);padding:0;
+    font:700 18px/1.15 -apple-system,system-ui,Roboto,sans-serif;font-variant-numeric:tabular-nums}
   .ms input:focus{outline:none;color:var(--tint)}
   .ms input.flash{animation:fl .7s}
   @keyframes fl{0%{color:var(--green)}100%{color:var(--text)}}
-  .enable{background:var(--tint-dim);color:var(--tint);border:0;border-radius:99px;font:600 11px/1 system-ui;padding:6px 8px;flex:none}
-
-  .ctl{display:flex;gap:5px;align-items:center;margin-bottom:6px}
+  .st{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--dim);text-transform:uppercase;flex:none}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--dim3)}
+  .dot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
+  .enable{background:var(--tint-dim);color:var(--tint);border:0;border-radius:99px;font:600 10.5px/1 system-ui;padding:5px 7px}
+  .ctl{display:flex;gap:4px;align-items:center;margin-bottom:5px}
   .ctl .seg{flex:1}
-  .ctl .seg button{padding:3px 1px;min-height:26px}
-  .ctl .seg .ic{width:18px;height:18px}
-  .step{display:flex;align-items:center;background:var(--fill);border-radius:8px;height:30px;flex:none}
-  .step button{width:24px;height:100%;background:none;border:0;color:var(--tint);font:600 17px/1 system-ui}
-  .step span{min-width:28px;text-align:center;font:600 13px/1 -apple-system,system-ui,Roboto,sans-serif}
-
-  .card{background:var(--card);border-radius:9px;overflow:hidden}
-  .lr{display:flex;align-items:center;gap:6px;padding:5px 8px;position:relative;font-variant-numeric:tabular-nums}
-  .lr+.lr::before{content:"";position:absolute;top:0;left:8px;right:0;height:.5px;background:var(--line)}
-  .lr .t{width:30px;font-weight:600;color:var(--tint)}
-  .lr .n{flex:1;text-align:right;font-weight:600}
-  .lr .p{width:36px;text-align:right;color:var(--dim);font-size:11.5px}
-  .lr.sub{color:var(--dim);font-size:11.5px;padding-top:4px;padding-bottom:4px}
-  .lr.sub .n{font-weight:500;color:var(--text)}
-  .warn{color:#FF9F0A;font-size:11.5px;margin:5px 2px 0}
-  .empty{color:var(--dim);font-size:12px;padding:8px;text-align:center}
-
-  .sc{display:flex;align-items:center;gap:7px;margin-top:6px;background:var(--card);border-radius:9px;padding:6px 8px}
-  .sc .ic{width:24px;height:24px}
-  .sc .k{font-size:10.5px;color:var(--dim);text-transform:uppercase}
-  .sc .v{font-weight:600;font-size:13.5px}
-
-  /* ---------- LARGE extras ---------- */
-  .tabs{margin-bottom:8px}
-  h3{margin:12px 0 5px 8px;font-size:11px;font-weight:400;text-transform:uppercase;color:var(--dim)}
-  .fld{display:flex;align-items:center;gap:8px;min-height:36px;padding:0 8px;position:relative}
+  .step{display:flex;align-items:center;background:var(--fill);border-radius:7px;height:28px;flex:none}
+  .step button{width:22px;height:100%;background:none;border:0;color:var(--tint);font:600 16px/1 system-ui}
+  .step span{min-width:26px;text-align:center;font:600 12.5px/1 -apple-system,system-ui,Roboto,sans-serif}
+  .lr{display:flex;align-items:center;gap:6px;padding:4px 7px;position:relative;font-variant-numeric:tabular-nums}
+  .lr+.lr::before{content:"";position:absolute;top:0;left:7px;right:0;height:.5px;background:var(--line)}
+  .lr .t{width:28px;font-weight:600;color:var(--tint)}
+  .lr .n{flex:1;text-align:right;font-weight:600;font-size:14px}
+  .lr .p{width:30px;text-align:right;color:var(--dim);font-size:11px}
+  .lr.sub{color:var(--dim);font-size:11px;padding-top:3px;padding-bottom:3px;justify-content:space-between}
+  .lr.sub b{color:var(--text);font-weight:500}
+  .warn{color:#FF9F0A;font-size:11px;margin:4px 2px 0}
+  .fld{display:flex;align-items:center;gap:8px;min-height:34px;padding:0 8px;position:relative}
   .fld+.fld::before{content:"";position:absolute;top:0;left:8px;right:0;height:.5px;background:var(--line)}
-  .fld label{flex:1;font-size:14px}
-  .fld input{width:80px;background:none;border:0;color:var(--dim);text-align:right;font:14px -apple-system,system-ui,Roboto,sans-serif}
+  .fld label{flex:1;font-size:13.5px}
+  .fld input{width:72px;background:none;border:0;color:var(--dim);text-align:right;font:13.5px -apple-system,system-ui,Roboto,sans-serif}
   .fld input:focus{outline:none;color:var(--text)}
-  .fld .seg{width:150px}
-  .copy{display:block;width:100%;margin-top:8px;background:var(--tint);color:#000;border:0;border-radius:9px;
-    padding:9px;font:600 14px/1.2 -apple-system,system-ui,Roboto,sans-serif}
-  .note{color:var(--dim);font-size:11.5px;line-height:15px;margin:5px 8px 0}
+  .fld .seg{width:140px}
+  .copy{display:block;width:100%;margin-top:7px;background:var(--tint);color:#000;border:0;border-radius:8px;
+    padding:8px;font:600 13.5px/1.2 -apple-system,system-ui,Roboto,sans-serif}
 
-  .res{display:flex;align-items:center;gap:10px;padding:10px}
-  .res .ic{width:42px;height:42px}
-  .res .k{font-size:11px;color:var(--dim);text-transform:uppercase}
-  .res .v{font:700 20px/1.2 -apple-system,system-ui,Roboto,sans-serif}
-  .res .s{font-size:12px;color:var(--dim);margin-top:1px}
-  .why{padding:0 10px 10px;font-size:13px;color:var(--dim)}
-  .mix{padding:4px 10px 8px}
-  .mx{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px}
-  .mx .ic{width:18px;height:18px}
-  .mx .nm{width:58px}
-  .mx .bar{flex:1;height:5px;border-radius:3px;background:var(--fill2);overflow:hidden}
-  .mx .bar i{display:block;height:100%;border-radius:3px}
-  .mx .pc{width:34px;text-align:right;color:var(--dim);font-variant-numeric:tabular-nums}
-  .pick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-  .pick button{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--card);border:0;border-radius:9px;
-    color:var(--dim);padding:6px 2px;font:500 11px/1 -apple-system,system-ui,Roboto,sans-serif}
-  .pick button .ic{width:24px;height:24px}
+  /* ---------- COUNTER ---------- */
+  .sh{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .sh .ic{width:20px;height:20px}
+  .sh .tot{font:700 16px/1.1 -apple-system,system-ui,Roboto,sans-serif}
+  .sh .sub{font-size:10.5px;color:var(--dim)}
+  .sh .grow{flex:1;min-width:0}
+  .reset{background:var(--fill2);border:0;border-radius:7px;color:var(--tint);font:600 11px/1 system-ui;padding:6px 8px}
+  .mixrow{margin-bottom:6px}
+  .mixrow .lab{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);text-transform:uppercase;margin-bottom:3px}
+  .stack{display:flex;height:9px;border-radius:5px;overflow:hidden;background:var(--fill2)}
+  .stack i{display:block;height:100%}
+  .pcts{display:flex;justify-content:space-between;margin-top:3px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+  .pcts span{display:flex;align-items:center;gap:2px}
+  .pcts .ic{width:13px;height:13px}
+  .pcts .z{opacity:.35;font-weight:500}
+  .send{display:flex;align-items:center;gap:7px;background:var(--card);border-radius:8px;padding:6px 7px}
+  .send .ic{width:30px;height:30px}
+  .send .k{font-size:10px;color:var(--dim);text-transform:uppercase}
+  .send .v{font:700 15px/1.15 -apple-system,system-ui,Roboto,sans-serif}
+  .send .v small{font-weight:400;font-size:12px;color:var(--dim)}
+  .pick{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px}
+  .pick button{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--card);border:0;border-radius:8px;
+    color:var(--dim);padding:5px 1px;font:500 10px/1 -apple-system,system-ui,Roboto,sans-serif}
+  .pick button .ic{width:20px;height:20px}
   .pick button.on{background:var(--card2);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--tint)}
   table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-  td,th{padding:6px 8px;text-align:right;font-size:13px}
-  th{font-weight:400;color:var(--dim);font-size:11px}
+  td,th{padding:5px 6px;text-align:right;font-size:12px}
+  th{font-weight:400;color:var(--dim);font-size:10.5px}
   td:first-child,th:first-child{text-align:left}
   tr+tr td{border-top:.5px solid var(--line)}
+  td.z{color:var(--dim3)}
   .hi{color:var(--green);font-weight:700} .lo{color:var(--red)}
-  .c-ground{color:var(--ground)} .c-ranged{color:var(--ranged)} .c-mounted{color:var(--mounted)} .c-siege{color:var(--siege)}
-  .b-ground{background:var(--ground)} .b-ranged{background:var(--ranged)} .b-mounted{background:var(--mounted)} .b-siege{background:var(--siege)}
+  .why{font-size:12px;color:var(--dim);margin:5px 6px 0}
 </style>
 </head>
-<body class="m-m">
+<body>
 <div id="app">
 
-  <!-- SMALL -->
-  <div class="sm" id="small"></div>
-
-  <!-- LARGE tabs -->
-  <div class="seg tabs" id="tabs"></div>
-
-  <!-- MEDIUM core (also the Layers tab in LARGE) -->
-  <section id="core">
+  <!-- ===== LAYERS ===== -->
+  <section id="v-layers">
     <div class="ms">
       <img class="ic" src="icons/glyph/march.webp" alt="">
-      <div class="grow">
-        <div class="lab"><span class="dot" id="dot"></span><span id="msLab">March size</span></div>
-        <input id="size" type="text" inputmode="numeric" placeholder="0" autocomplete="off">
-      </div>
+      <input id="size" type="text" inputmode="numeric" placeholder="March size" autocomplete="off">
+      <span class="st" id="autoSt"><span class="dot" id="dot"></span><span id="autoTxt">auto</span></span>
       <button class="enable hide" id="enableBtn">Turn on</button>
     </div>
     <div class="ctl">
@@ -142,9 +122,8 @@
     </div>
     <div class="card" id="layerOut"></div>
     <div class="warn hide" id="warn"></div>
-    <div class="sc hide" id="scoutLine"></div>
 
-    <div id="lgLayers">
+    <div class="x">
       <h3>Settings</h3>
       <div class="card">
         <div class="fld"><label>Split</label><div class="seg" id="profile"></div></div>
@@ -153,25 +132,29 @@
         <div class="fld"><label>Round to</label><div class="seg" id="round"></div></div>
       </div>
       <button class="copy" id="copyBtn">Copy layers</button>
-      <p class="note">Splits come from published layering guides. Treat them as a starting point and adjust from your battle reports.</p>
+      <p class="note">Splits come from published layering guides. Adjust from your battle reports.</p>
     </div>
   </section>
 
-  <!-- LARGE counter tab -->
-  <section id="counter">
-    <div class="card" id="scoutCard"></div>
-    <div class="card" id="counterOut" style="margin-top:8px"></div>
-    <h3>Or pick the enemy's main type</h3>
-    <div class="pick" id="enemyPick"></div>
-    <h3>Damage multipliers · community data</h3>
-    <div class="card"><table id="coefTable"></table></div>
-    <p class="note">Attacker (row) vs defender (column). Reported by players, not confirmed by Evony.</p>
+  <!-- ===== COUNTER ===== -->
+  <section id="v-counter" class="hide">
+    <div id="scoutOut"></div>
+    <div class="x">
+      <h3>Troops by tier</h3>
+      <div class="card" id="tierTable"></div>
+      <h3>Pick the enemy's main type yourself</h3>
+      <div class="pick" id="enemyPick"></div>
+      <h3>Damage multipliers · community data</h3>
+      <div class="card"><table id="coefTable"></table></div>
+      <p class="note">Attacker (row) vs defender (column). Reported by players, not confirmed by Evony.</p>
+    </div>
   </section>
 </div>
 
 <script>
 const TYPES=["ground","ranged","mounted","siege"];
 const NAME={ground:"Ground",ranged:"Ranged",mounted:"Mounted",siege:"Siege"};
+const ABBR={ground:"G",ranged:"R",mounted:"M",siege:"S"};
 const glyph=t=>`<img class="ic" src="icons/glyph/${t}.webp" alt="">`;
 const badge=t=>`<img class="ic" src="icons/badge/${t}.webp" alt="">`;
 const COEF={ground:{ground:1,ranged:1.2,mounted:0.7,siege:1.1},ranged:{ground:0.8,ranged:1,mounted:1.2,siege:1.1},
@@ -187,23 +170,18 @@ const store={get(k,d){try{const v=localStorage.getItem("mo_"+k);return v===null?
              set(k,v){try{localStorage.setItem("mo_"+k,v)}catch(e){}}};
 const $=id=>document.getElementById(id);
 const fmt=n=>Math.round(n).toLocaleString("en-US");
-const short=n=>n>=1e6?(n/1e6).toFixed(2).replace(/\.?0+$/,"")+"M":n>=1e4?Math.round(n/1e3)+"K":fmt(n);
+const short=n=>n>=1e6?(n/1e6).toFixed(2).replace(/\.?0+$/,"")+"M":n>=1e3?(n/1e3).toFixed(n>=1e5?0:1).replace(/\.0$/,"")+"K":String(Math.round(n));
 const native=window.Overlay||null;
 
-/* ---------- modes: s / m / l (set by the native header) ---------- */
-let mode="m", tab=store.get("tab","layers");
-function applyMode(){
-  document.body.className="m-"+mode; document.documentElement.className="m-"+mode;
-  const S=mode==="s", L=mode==="l";
-  $("small").classList.toggle("hide",!S);
-  $("tabs").classList.toggle("hide",!L);
-  $("core").classList.toggle("hide",S||(L&&tab!=="layers"));
-  $("lgLayers").classList.toggle("hide",!L);
-  $("counter").classList.toggle("hide",!(L&&tab==="counter"));
-  paintScoutLine();
+/* ---------- view: layers / counter, compact / expanded (set by native) ---------- */
+let view=store.get("view","layers"), expanded=false;
+function apply(){
+  $("v-layers").classList.toggle("hide",view!=="layers");
+  $("v-counter").classList.toggle("hide",view!=="counter");
+  document.querySelectorAll(".x").forEach(e=>e.classList.toggle("hide",!expanded));
   reportHeight();
 }
-window.setMode=m=>{mode=m;applyMode()};
+window.setView=(v,exp)=>{view=v;expanded=!!exp;store.set("view",v);apply()};
 function reportHeight(){
   if(!native||!native.setContentHeight) return;
   requestAnimationFrame(()=>native.setContentHeight(Math.ceil($("app").getBoundingClientRect().height)));
@@ -217,8 +195,6 @@ function seg(id,opts,cur,onPick){
     el.appendChild(b);
   });
 }
-if(tab!=="counter") tab="layers";
-seg("tabs",[["layers","Layers"],["counter","Counter"]],tab,v=>{tab=v;store.set("tab",v);applyMode()});
 
 /* ---------- keyboard: the panel only takes focus while you type ---------- */
 document.addEventListener("pointerdown",e=>{
@@ -231,10 +207,9 @@ document.addEventListener("focusout",()=>setTimeout(()=>{
 },60));
 window.dropFocus=()=>{ const a=document.activeElement; if(a&&a.blur) a.blur(); };
 
-/* ---------- layers ---------- */
+/* ================= LAYERS ================= */
 let main=store.get("main","ranged"), tier=parseInt(store.get("tier","12"),10)||12;
-let prof=store.get("profile","guide"), R=store.get("round","100");
-let autoOn=false;
+let prof=store.get("profile","guide"), R=store.get("round","100"), autoOn=false;
 seg("typeSeg",TYPES.map(t=>[t,glyph(t)]),main,v=>{main=v;store.set("main",v);calc()});
 seg("profile",[["guide","Guide"],["top","Top"],["even","Even"]],prof,v=>{prof=v;store.set("profile",v);calc()});
 seg("round",[["10","10"],["100","100"],["1000","1K"]],R,v=>{R=v;store.set("round",v);calc()});
@@ -245,34 +220,28 @@ function setSize(n){$("size").value=n?fmt(n):"";store.set("size",n||"")}
 ["lowPct","thin"].forEach(id=>{const el=$(id),v=store.get(id,null);if(v!==null)el.value=v;
   el.addEventListener("input",()=>{store.set(id,el.value);calc()})});
 setSize(parseInt(store.get("size","0"),10));
-$("size").addEventListener("input",()=>{setSize(sizeVal());$("msLab").textContent="March size";calc()});
+$("size").addEventListener("input",()=>{setSize(sizeVal());calc()});
 
 let lastRows=[];
 function calc(){
-  const S=sizeVal(), K=tier, out=$("layerOut"), warn=$("warn"), sm=$("small");
+  const S=sizeVal(), K=tier, out=$("layerOut"), warn=$("warn");
   const low=Math.max(0,parseFloat($("lowPct").value)||0)/100, thin=Math.max(0,parseInt($("thin").value,10)||0), r=parseInt(R,10);
   warn.classList.add("hide"); lastRows=[];
-  const fail=msg=>{out.innerHTML=`<div class="empty">${msg}</div>`;sm.innerHTML=`<div class="none">${msg}</div>`;reportHeight()};
-  if(!S||S<100) return fail(autoOn?"Open Create Presets to read your march size.":"Enter a march size.");
+  if(!S||S<100){out.innerHTML=`<div class="empty">${autoOn?"Open Create Presets and your march size fills in.":"Type your march size above."}</div>`;return reportHeight()}
   const rnd=n=>Math.floor(n/r)*r;
   let split=(prof==="guide"?SPLIT.guide[main]:SPLIT[prof]).slice(0,Math.min(3,K));
   const sum=split.reduce((a,b)=>a+b,0); split=split.map(x=>x/sum);
   const lowerN=Math.max(0,K-3), lowEach=rnd(S*low), thinTotal=thin*3*K, pool=S-thinTotal-lowEach*lowerN;
-  if(pool<=0) return fail("Layers exceed the march. Lower the % or other-type count.");
+  if(pool<=0){out.innerHTML=`<div class="empty">Layers exceed the march. Lower the % or other-type count.</div>`;return reportHeight()}
   if(pool<S*0.6){warn.textContent="Lower and other-type layers use over 40% of the march.";warn.classList.remove("hide")}
   const rows=[]; let used=0;
   split.forEach((p,i)=>{const n=rnd(pool*p);rows.push({t:K-i,n});used+=n}); rows[0].n+=pool-used;
-
-  let h=rows.map(x=>`<div class="lr"><span class="t">T${x.t}</span><span class="n">${fmt(x.n)}</span><span class="p">${(x.n/S*100).toFixed(1)}%</span></div>`).join("");
-  if(lowerN&&lowEach) h+=`<div class="lr sub"><span>T1–${K-3} ${NAME[main]}</span><span class="n">${fmt(lowEach)} each</span></div>`;
-  if(thin) h+=`<div class="lr sub"><span>Other types T1–${K}</span><span class="n">${fmt(thin)} each</span></div>`;
+  let h=rows.map(x=>`<div class="lr"><span class="t">T${x.t}</span><span class="n">${fmt(x.n)}</span><span class="p">${Math.round(x.n/S*100)}%</span></div>`).join("");
+  const subs=[];
+  if(lowerN&&lowEach) subs.push(`T1–${K-3} <b>${fmt(lowEach)}</b>`);
+  if(thin) subs.push(`Other <b>${fmt(thin)}</b>`);
+  if(subs.length) h+=`<div class="lr sub"><span>${subs[0]}</span><span>${subs[1]||""}</span></div>`;
   out.innerHTML=h;
-
-  let s=rows.map(x=>`<div class="r"><b>T${x.t}</b><span>${fmt(x.n)}</span></div>`).join("");
-  if(lowerN&&lowEach) s+=`<div class="r lo"><b>T1–${K-3}</b><span>${fmt(lowEach)}</span></div>`;
-  if(thin) s+=`<div class="r lo"><b>Other</b><span>${fmt(thin)}</span></div>`;
-  sm.innerHTML=s;
-
   lastRows=rows.map(x=>`T${x.t} ${NAME[main]}: ${fmt(x.n)}`);
   if(lowerN&&lowEach) lastRows.push(`T1-T${K-3} ${NAME[main]}: ${fmt(lowEach)} each`);
   if(thin) lastRows.push(`Other types T1-T${K}: ${fmt(thin)} each`);
@@ -284,72 +253,95 @@ $("copyBtn").onclick=()=>{
   if(native&&native.copy) native.copy(txt); else try{navigator.clipboard.writeText(txt)}catch(e){}
   $("copyBtn").textContent="Copied"; setTimeout(()=>$("copyBtn").textContent="Copy layers",1200);
 };
-
-/* ---------- auto-read (runs natively, all the time) ---------- */
 function paintAuto(){
   $("dot").classList.toggle("on",autoOn);
+  $("autoSt").classList.toggle("hide",!autoOn&&!!native);
   $("enableBtn").classList.toggle("hide",autoOn||!native);
-  if(!autoOn) $("msLab").textContent="March size";
 }
 $("enableBtn").onclick=()=>{ native&&native.requestAutoRead&&native.requestAutoRead(); };
-window.onAutoState=on=>{autoOn=!!on;paintAuto();calc()};
-window.onMarchRead=(max)=>{
+window.onAutoState=on=>{autoOn=!!on;paintAuto();calc();renderCounter()};
+window.onMarchRead=max=>{
   max=parseInt(max,10); if(!max) return;
   if(sizeVal()!==max){ setSize(max); calc(); const el=$("size"); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
-  $("msLab").textContent="March size · auto";
 };
 
-/* ---------- counter (scout reports) ---------- */
-let scout=null; try{scout=JSON.parse(store.get("scout","null"))}catch(e){}
+/* ================= COUNTER ================= */
+// scout = {session, e:[{n:name, t:type, r:tier(0=unknown), c:count}]}, rebuilt natively without double counting
+let scout=null, scoutAt=0; try{const s=JSON.parse(store.get("scout2","null")); if(s){scout=s.d; scoutAt=s.at}}catch(e){}
 let enemyPick=store.get("enemy","");
-function mainOf(sc){ if(!sc) return null; let best=null,tot=0; TYPES.forEach(t=>{tot+=sc[t]||0; if(!best||(sc[t]||0)>(sc[best]||0)) best=t}); return tot>0?best:null; }
-function ago(ts){ const m=Math.round((Date.now()-ts)/60000); return m<1?"just now":m<60?m+" min ago":Math.round(m/60)+" h ago"; }
-function enemyType(){ return enemyPick || mainOf(scout); }
-window.onScoutRead=(g,r,m,s)=>{
-  scout={ground:+g,ranged:+r,mounted:+m,siege:+s,ts:Date.now()};
-  store.set("scout",JSON.stringify(scout)); enemyPick=""; store.set("enemy","");
-  document.querySelectorAll("#enemyPick button").forEach(b=>b.classList.remove("on"));
+window.onScoutData=d=>{
+  if(!d||!d.e||!d.e.length){ scout=null; scoutAt=0; store.set("scout2","null"); }
+  else { if(!scout||scout.session!==d.session){ enemyPick=""; store.set("enemy",""); }
+    scout=d; scoutAt=Date.now(); store.set("scout2",JSON.stringify({d,at:scoutAt})); }
   renderCounter();
 };
-function paintScoutLine(){
-  const el=$("scoutLine"), e=enemyType();
-  if(mode!=="m"||!e){el.classList.add("hide");return}
-  const c=COUNTER[e];
-  el.innerHTML=`${badge(c.send)}<div><div class="k">${!enemyPick&&scout?"Scouted "+ago(scout.ts):"Enemy picked"} · ${NAME[e]}</div>
-    <div class="v">Send <span class="c-${c.send}">${NAME[c.send]}</span>${c.alt?` <span style="color:var(--dim);font-weight:400">or ${NAME[c.alt]}</span>`:""}</div></div>`;
-  el.classList.remove("hide");
+function sums(entries){ const s={ground:0,ranged:0,mounted:0,siege:0}; entries.forEach(x=>s[x.t]+=x.c); return s; }
+function mainOf(s){ let b=null; TYPES.forEach(t=>{ if(s[t]>0&&(!b||s[t]>s[b])) b=t }); return b; }
+function ago(ts){ const m=Math.round((Date.now()-ts)/60000); return m<1?"just now":m<60?m+" min ago":Math.round(m/60)+" h ago"; }
+function mixRow(label,right,s){
+  const tot=TYPES.reduce((a,t)=>a+s[t],0)||1;
+  return `<div class="mixrow"><div class="lab"><span>${label}</span><span>${right}</span></div>
+    <div class="stack">${TYPES.map(t=>`<i class="b-${t}" style="width:${s[t]/tot*100}%"></i>`).join("")}</div>
+    <div class="pcts">${TYPES.map(t=>{const p=Math.round(s[t]/tot*100);return `<span class="c-${t}${p?"":" z"}">${glyph(t)}${p}%</span>`}).join("")}</div></div>`;
 }
 function renderCounter(){
-  const sc=$("scoutCard");
-  if(mainOf(scout)){
-    const tot=TYPES.reduce((a,t)=>a+(scout[t]||0),0);
-    sc.innerHTML=`<div class="res" style="padding-bottom:4px">${badge("scout")}<div><div class="k">Last scout · ${ago(scout.ts)}</div>
-      <div class="v">${short(tot)} troops</div></div></div><div class="mix">`+
-      TYPES.map(t=>{const p=(scout[t]||0)/tot*100;return `<div class="mx">${glyph(t)}<span class="nm">${NAME[t]}</span>
-        <span class="bar"><i class="b-${t}" style="width:${p}%"></i></span><span class="pc">${Math.round(p)}%</span></div>`}).join("")+`</div>`;
+  const out=$("scoutOut"), entries=scout?scout.e:[];
+  let enemy=enemyPick||null, basis="";
+  let h="";
+  if(entries.length){
+    const all=sums(entries), tot=TYPES.reduce((a,t)=>a+all[t],0);
+    const top=Math.max(0,...entries.map(x=>x.r||0));
+    const topS=top?sums(entries.filter(x=>x.r===top)):null;
+    const live=Date.now()-scoutAt<4000;
+    h+=`<div class="sh">${glyph("scout")}<div class="grow"><div class="tot">${short(tot)} troops</div>
+      <div class="sub">${live?"Reading… keep scrolling":"Scouted "+ago(scoutAt)} · ${entries.length} troop line${entries.length>1?"s":""}</div></div>
+      <button class="reset" id="resetBtn">Reset</button></div>`;
+    if(topS) h+=mixRow(`Top tier · T${top}`,short(TYPES.reduce((a,t)=>a+topS[t],0)),topS);
+    h+=mixRow("All troops",short(tot),all);
+    if(!enemy){ enemy=mainOf(topS||all); basis=topS?`T${top}`:"all"; }
   } else {
-    sc.innerHTML=`<div class="res">${badge("scout")}<div><div class="v" style="font-size:15px">No scout yet</div>
-      <div class="s">Open a scout report in Evony and it's read automatically.</div></div></div>`;
+    h+=`<div class="sh">${glyph("scout")}<div class="grow"><div class="tot" style="font-size:14px">No scout yet</div>
+      <div class="sub">${autoOn?"Open a scout report and scroll through it.":"Turn on auto-read to scan scout reports."}</div></div></div>`;
   }
-  const e=enemyType(), out=$("counterOut");
-  if(!e){ out.innerHTML=`<div class="empty">Scout a target, or pick its main type below.</div>`; }
-  else { const c=COUNTER[e];
-    out.innerHTML=`<div class="res">${badge(c.send)}<div><div class="k">Enemy mostly ${NAME[e]} · send</div><div class="v c-${c.send}">${NAME[c.send]}</div>`+
-      (c.alt?`<div class="s">Also good: ${NAME[c.alt]}</div>`:"")+(c.avoid?`<div class="s">Avoid: ${NAME[c.avoid]}</div>`:"")+
-      `</div></div><div class="why">${c.why}</div>`; }
-  let h=`<tr><th>Atk \\ Def</th>${TYPES.map(t=>`<th>${NAME[t].slice(0,3)}</th>`).join("")}</tr>`;
-  TYPES.forEach(a=>{h+=`<tr><td class="c-${a}">${NAME[a]}</td>`+TYPES.map(d=>{const v=COEF[a][d];
-    const cls=d===e&&v>=1.1?"hi":d===e&&v<1?"lo":"";return `<td class="${cls}">${v}</td>`}).join("")+"</tr>"});
-  $("coefTable").innerHTML=h;
-  paintScoutLine(); reportHeight();
+  if(enemyPick) basis="picked";
+  if(enemy){ const c=COUNTER[enemy];
+    h+=`<div class="send">${badge(c.send)}<div><div class="k">vs ${NAME[enemy]} · ${basis} · send</div>
+      <div class="v c-${c.send}">${NAME[c.send]}${c.alt?` <small>or ${NAME[c.alt]}</small>`:""}</div></div></div>`;
+    if(expanded) h+=`<div class="why">${c.why}${c.avoid?` Avoid ${NAME[c.avoid]}.`:""}</div>`;
+  } else if(!entries.length){
+    h+=`<div class="pick" id="quickPick"></div>`;
+  }
+  out.innerHTML=h;
+  const rb=$("resetBtn"); if(rb) rb.onclick=()=>{ if(native&&native.resetScout) native.resetScout(); else window.onScoutData(null); };
+  const qp=$("quickPick"); if(qp) buildPick(qp);
+
+  // expanded: troops by tier
+  if(entries.length){
+    const tiers=[...new Set(entries.map(x=>x.r||0))].sort((a,b)=>b-a);
+    let t=`<table><tr><th>Tier</th>${TYPES.map(x=>`<th class="c-${x}">${ABBR[x]}</th>`).join("")}</tr>`;
+    tiers.forEach(r=>{ const s=sums(entries.filter(x=>(x.r||0)===r));
+      t+=`<tr><td>${r?"T"+r:"?"}</td>${TYPES.map(x=>`<td class="${s[x]?"":"z"}">${s[x]?short(s[x]):"–"}</td>`).join("")}</tr>`; });
+    $("tierTable").innerHTML=t+"</table>";
+  } else $("tierTable").innerHTML=`<div class="empty">Nothing scanned yet.</div>`;
+
+  let c=`<tr><th>Atk \\ Def</th>${TYPES.map(t=>`<th>${ABBR[t]}</th>`).join("")}</tr>`;
+  TYPES.forEach(a=>{c+=`<tr><td class="c-${a}">${NAME[a]}</td>`+TYPES.map(d=>{const v=COEF[a][d];
+    const cls=d===enemy&&v>=1.1?"hi":d===enemy&&v<1?"lo":"";return `<td class="${cls}">${v}</td>`}).join("")+"</tr>"});
+  $("coefTable").innerHTML=c;
+  buildPick($("enemyPick"));
+  reportHeight();
 }
-(function(){const el=$("enemyPick");TYPES.forEach(t=>{const b=document.createElement("button");b.innerHTML=glyph(t)+NAME[t];
-  if(t===enemyPick)b.classList.add("on");
-  b.onclick=()=>{enemyPick=enemyPick===t?"":t;store.set("enemy",enemyPick);el.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b&&enemyPick===t));renderCounter()};
-  el.appendChild(b)})})();
+function buildPick(el){
+  el.innerHTML="";
+  TYPES.forEach(t=>{const b=document.createElement("button");b.innerHTML=glyph(t)+NAME[t];
+    if(t===enemyPick)b.classList.add("on");
+    b.onclick=()=>{enemyPick=enemyPick===t?"":t;store.set("enemy",enemyPick);renderCounter()};
+    el.appendChild(b)});
+}
+setInterval(()=>{ if(view==="counter"&&scout) renderCounter(); },5000);
 
 if(native&&native.isAutoRead){ autoOn=native.isAutoRead(); }
-paintAuto(); renderCounter(); calc(); applyMode();
+paintAuto(); calc(); renderCounter(); apply();
 window.addEventListener("load",reportHeight);
 document.querySelectorAll("img").forEach(i=>i.addEventListener("load",reportHeight));
 </script>

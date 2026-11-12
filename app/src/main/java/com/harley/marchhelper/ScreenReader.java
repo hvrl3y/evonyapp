@@ -34,11 +34,12 @@ public class ScreenReader {
         /** Called on a background thread with the march max and the selected count. */
         void onMarch(long max, long selected);
 
-        /** Called on a background thread with troop totals read from a scout report. */
-        void onScout(long ground, long ranged, long mounted, long siege);
+        /** Called on a background thread with the scout report built so far (JSON). */
+        void onScout(String json);
     }
 
     private static final long INTERVAL_MS = 1500;
+    private static final long FAST_MS = 600; // while a scout report is open, to keep up with scrolling
     private static final int MAX_WIDTH = 1080;
 
     // "189,151 / 1,927,850" — tolerant of OCR reading the slash as | I l \
@@ -56,6 +57,15 @@ public class ScreenReader {
     private volatile boolean paused = false;
     private volatile boolean running = false;
     private int width, height;
+    private final ScoutTally tally = new ScoutTally();
+
+    /** Forget the current scout report (the next one starts fresh). */
+    public void resetScout() {
+        handler.post(() -> {
+            tally.reset();
+            listener.onScout(tally.toJson());
+        });
+    }
 
     public ScreenReader(MediaProjection projection, Listener listener) {
         this.projection = projection;
@@ -110,7 +120,7 @@ public class ScreenReader {
                 }
             } catch (Exception ignored) {
             }
-            handler.postDelayed(this, INTERVAL_MS);
+            handler.postDelayed(this, tally.isActive(System.currentTimeMillis()) ? FAST_MS : INTERVAL_MS);
         }
     };
 
@@ -138,58 +148,14 @@ public class ScreenReader {
                 });
     }
 
-    // Words that appear in Evony troop names, by type. Matched as word starts, lower case.
-    private static final String[][] KEYWORDS = {
-            /* ground  */ {"ground", "guard", "infantry", "swordsm", "spearm", "pikem", "warrior", "legion", "hoplite", "phalanx", "conscript", "militia", "halberd"},
-            /* ranged  */ {"ranged", "archer", "bowm", "crossbow", "marksm", "slinger", "longbow", "sharpshoot", "musket"},
-            /* mounted */ {"mounted", "cavalry", "rider", "knight", "horse", "lancer", "cataphract", "hussar", "cuirassier", "dragoon"},
-            /* siege   */ {"siege", "catapult", "ballista", "trebuchet", "battering", "onager", "cannon", "mangonel", "machine", "bombard"},
-    };
-    private static final Pattern COUNT = Pattern.compile("[x×]?(\\d{1,3}(?:[,.]\\d{3})+|\\d+)[,.;:]?");
-
     private void parse(Text text) {
         String all = text.getText().toLowerCase(Locale.US);
         List<String> rows = rows(text);
-        if (all.contains("scout")) parseScout(rows);
+        boolean otherScreen = all.contains("preset") || all.contains("select troops") || all.contains("march size");
+        if (tally.feed(rows, all.contains("scout"), otherScreen, System.currentTimeMillis()))
+            listener.onScout(tally.toJson());
         // Only trust march numbers on troop / march screens.
         if (all.contains("preset") || all.contains("troops") || all.contains("march")) parseMarch(rows);
-    }
-
-    private void parseScout(List<String> rows) {
-        long[] tot = new long[4];
-        for (String row : rows) {
-            // Walk the words left to right. A troop word sets the current type; the largest
-            // number that follows it (or comes just before the first one) is that troop's count.
-            // This keeps two troop cards that sit side by side on one line apart.
-            int cur = -1;
-            long pending = 0, segMax = 0;
-            for (String w : row.split("\\s+")) {
-                if (w.isEmpty()) continue;
-                int t = typeOf(w.toLowerCase(Locale.US));
-                if (t >= 0) {
-                    if (cur >= 0 && segMax >= 10) tot[cur] += segMax;
-                    else if (cur < 0 && pending >= 10) segMax = pending;
-                    if (cur >= 0) segMax = 0;
-                    cur = t;
-                    continue;
-                }
-                Matcher m = COUNT.matcher(w);
-                if (m.matches()) {
-                    long n = num(w);
-                    if (cur < 0) pending = Math.max(pending, n);
-                    else segMax = Math.max(segMax, n);
-                }
-            }
-            if (cur >= 0 && segMax >= 10) tot[cur] += segMax;
-        }
-        if (tot[0] + tot[1] + tot[2] + tot[3] > 0) listener.onScout(tot[0], tot[1], tot[2], tot[3]);
-    }
-
-    private static int typeOf(String word) {
-        for (int t = 0; t < 4; t++)
-            for (String k : KEYWORDS[t])
-                if (word.startsWith(k)) return t;
-        return -1;
     }
 
     /** Rebuild visual rows from words, so text on one line of the screen is read together. */
