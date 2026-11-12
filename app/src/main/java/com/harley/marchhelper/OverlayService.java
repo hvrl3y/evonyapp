@@ -78,7 +78,7 @@ public class OverlayService extends Service {
     private LinearLayout menu;
     private WindowManager.LayoutParams menuLp;
     private boolean menuShown = false;
-    private View menuLayers, menuScout;
+    private View menuLayers, menuScout, menuMuster;
 
     // panel
     private LinearLayout panel;
@@ -87,7 +87,7 @@ public class OverlayService extends Service {
     private TextView title, expandBtn;
     private boolean panelShown = false;
     private boolean keyboard = false;
-    private String view = "layers";           // layers | scout
+    private String view = "layers";           // layers | scout | muster
     private boolean expanded = false;
     private int contentHeightDp = 200;
 
@@ -114,7 +114,7 @@ public class OverlayService extends Service {
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         prefs = getSharedPreferences("overlay", MODE_PRIVATE);
         view = prefs.getString("view", "layers");
-        if (!view.equals("scout")) view = "layers";
+        if (!view.equals("scout") && !view.equals("muster")) view = "layers";
         expanded = prefs.getBoolean("exp_" + view, false);
         goForeground(false);
         createBubble();
@@ -156,7 +156,7 @@ public class OverlayService extends Service {
                 new Intent(this, MainActivity.class), PendingIntent.FLAG_IMMUTABLE);
         Notification n = new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notif)
-                .setContentTitle("Marchitect Overlay is running")
+                .setContentTitle("Marchitect overlay is running")
                 .setContentText(capturing ? "Reading march sizes and scout reports." : "Tap the bubble for Layers and Counter.")
                 .setContentIntent(open)
                 .addAction(new Notification.Action.Builder((android.graphics.drawable.Icon) null, "Stop", stop).build())
@@ -207,6 +207,11 @@ public class OverlayService extends Service {
                         lastMax = max;
                         js("window.onMarchRead&&onMarchRead(" + max + "," + sel + ")");
                     });
+                }
+
+                @Override
+                public void onMine(String json) {
+                    main.post(() -> js("window.onMineData&&onMineData(" + json + ")"));
                 }
 
                 @Override
@@ -344,6 +349,11 @@ public class OverlayService extends Service {
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         gap.topMargin = dp(4);
         menu.addView(menuScout, gap);
+        menuMuster = menuItem(R.drawable.badge_muster, "Muster", "muster");
+        LinearLayout.LayoutParams gap2 = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        gap2.topMargin = dp(4);
+        menu.addView(menuMuster, gap2);
         menuLp = overlayParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     }
 
@@ -370,8 +380,9 @@ public class OverlayService extends Service {
     }
 
     private void paintMenu() {
-        for (View v : new View[]{menuLayers, menuScout}) {
-            boolean on = panelShown && ((v == menuLayers && view.equals("layers")) || (v == menuScout && view.equals("scout")));
+        for (View v : new View[]{menuLayers, menuScout, menuMuster}) {
+            boolean on = panelShown && ((v == menuLayers && view.equals("layers")) || (v == menuScout && view.equals("scout"))
+                    || (v == menuMuster && view.equals("muster")));
             GradientDrawable bg = new GradientDrawable();
             bg.setColor(on ? Color.parseColor("#2EF2B544") : Color.TRANSPARENT);
             if (on) bg.setStroke(dp(1), C_TINT);
@@ -530,7 +541,7 @@ public class OverlayService extends Service {
                 pushAutoState(reader != null);
             }
         });
-        web.loadUrl("file:///android_asset/index.html");
+        web.loadUrl("file:///android_asset/overlay.html");
         panel.addView(web, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
         Point s = screen();
@@ -551,7 +562,7 @@ public class OverlayService extends Service {
     }
 
     private void paintHeader() {
-        title.setText(view.equals("scout") ? "Scout" : "Layers");
+        title.setText(view.equals("scout") ? "Scout" : view.equals("muster") ? "Muster" : "Layers");
         expandBtn.setRotation(expanded ? -90 : 90);
     }
 
@@ -708,6 +719,15 @@ public class OverlayService extends Service {
         @JavascriptInterface
         public void wantKeyboard(boolean on) {
             main.post(() -> setKeyboard(on));
+        }
+
+        @JavascriptInterface
+        public void setMineScan(boolean on) {
+            main.post(() -> {
+                if (reader == null) { if (on) requestCapture(); js("window.onScanState&&onScanState(false)"); return; }
+                reader.setMineScan(on);
+                js("window.onScanState&&onScanState(" + on + ")");
+            });
         }
 
         @JavascriptInterface

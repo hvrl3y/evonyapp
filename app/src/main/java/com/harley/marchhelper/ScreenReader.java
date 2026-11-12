@@ -36,6 +36,9 @@ public class ScreenReader {
 
         /** Called on a background thread with the scout report built so far (JSON). */
         void onScout(String json);
+
+        /** Called with your own troops (JSON) while "Scan my troops" is on. */
+        void onMine(String json);
     }
 
     private static final long INTERVAL_MS = 1500;
@@ -58,6 +61,16 @@ public class ScreenReader {
     private volatile boolean running = false;
     private int width, height;
     private final ScoutTally tally = new ScoutTally();
+    private final ScoutTally mine = new ScoutTally(Long.MAX_VALUE / 4);
+    private volatile boolean mineScan = false;
+
+    /** Read your own troop list (any screen with "Lv## name count" rows that isn't a scout report). */
+    public void setMineScan(boolean on) {
+        handler.post(() -> {
+            if (on && !mineScan) mine.reset();
+            mineScan = on;
+        });
+    }
 
     /** Forget the current scout report (the next one starts fresh). */
     public void resetScout() {
@@ -120,7 +133,7 @@ public class ScreenReader {
                 }
             } catch (Exception ignored) {
             }
-            handler.postDelayed(this, tally.isActive(System.currentTimeMillis()) ? FAST_MS : INTERVAL_MS);
+            handler.postDelayed(this, mineScan || tally.isActive(System.currentTimeMillis()) ? FAST_MS : INTERVAL_MS);
         }
     };
 
@@ -151,6 +164,17 @@ public class ScreenReader {
     private void parse(Text text) {
         String all = text.getText().toLowerCase(Locale.US);
         boolean scout = all.contains("scout report") || all.contains("scout");
+        if (mineScan && !scout) {
+            List<ScoutTally.W> ws = new ArrayList<>();
+            for (Text.TextBlock b : text.getTextBlocks())
+                for (Text.Line l : b.getLines())
+                    for (Text.Element e : l.getElements()) {
+                        Rect r = e.getBoundingBox();
+                        if (r != null) ws.add(new ScoutTally.W(e.getText(), r.left, r.top, r.right, r.bottom));
+                    }
+            ScoutTally.Read read = ScoutTally.extract(ws);
+            if (!read.lines.isEmpty() && mine.feed(read, true, System.currentTimeMillis())) listener.onMine(mine.toJson());
+        }
         if (scout) {
             List<ScoutTally.W> ws = new ArrayList<>(), ls = new ArrayList<>();
             for (Text.TextBlock b : text.getTextBlocks())

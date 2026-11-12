@@ -70,6 +70,32 @@
   .copy{display:block;width:100%;margin-top:7px;background:var(--tint);color:#000;border:0;border-radius:8px;
     padding:8px;font:600 13.5px/1.2 -apple-system,system-ui,Roboto,sans-serif}
 
+  /* ---------- MUSTER ---------- */
+  .mh{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+  .mh .ic{width:22px;height:22px} .mh .grow{flex:1;min-width:0}
+  .mh b{font:700 15px/1.15 -apple-system,system-ui,Roboto,sans-serif;display:block}
+  .mh .sub{font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bh,.bi{display:grid;grid-template-columns:62px 1fr 1fr 1fr;gap:4px;align-items:center;padding:4px 6px}
+  .bh{font-size:10px;color:var(--dim);text-align:center;padding-bottom:0}
+  .bi+.bi{border-top:.5px solid var(--line)}
+  .bi span{font-size:11px;color:var(--dim)}
+  .bi input{min-width:0;width:100%;background:var(--fill2);border:0;border-radius:6px;color:var(--text);text-align:center;
+    font:600 13px/1 -apple-system,system-ui,Roboto,sans-serif;padding:6px 2px;font-variant-numeric:tabular-nums}
+  .bi input:focus{outline:1px solid var(--tint)}
+  .pull{display:block;width:100%;margin-top:6px;background:var(--tint-dim);color:var(--tint);border:0;border-radius:8px;
+    padding:7px;font:600 12.5px/1.2 -apple-system,system-ui,Roboto,sans-serif}
+  .scan{display:block;width:100%;background:var(--fill2);color:var(--tint);border:0;border-radius:8px;padding:7px;font:600 12.5px/1.2 -apple-system,system-ui,Roboto,sans-serif}
+  .scan.on{background:var(--tint);color:#000}
+  /* matchup */
+  .mu{margin-top:6px;border-radius:8px;padding:6px 7px;background:var(--card)}
+  .mu .k{font-size:10px;color:var(--dim);text-transform:uppercase}
+  .mu .v{font:700 15px/1.2 -apple-system,system-ui,Roboto,sans-serif}
+  .mu .s{font-size:11px;color:var(--dim);margin-top:1px}
+  .mu.win{box-shadow:inset 0 0 0 1px rgba(48,209,88,.6)} .mu.win .v{color:var(--green)}
+  .mu.loss{box-shadow:inset 0 0 0 1px rgba(255,69,58,.6)} .mu.loss .v{color:var(--red)}
+  .mu.close .v{color:#FF9F0A}
+  .mu .need{font-size:11.5px;color:var(--dim)}
+
   /* ---------- SCOUT ---------- */
   .vt{display:flex;flex-direction:column;gap:3px}
   .vt .tot{display:flex;align-items:center;gap:5px}
@@ -165,9 +191,33 @@
     </div>
   </section>
 
+  <!-- ===== MUSTER ===== -->
+  <section id="v-muster" class="hide">
+    <div class="mh">
+      <img class="ic" src="icons/glyph/crown.webp" alt="">
+      <div class="grow"><b id="muTitle">Your march</b><div class="sub" id="muSub"></div></div>
+    </div>
+    <div class="ctl"><div class="seg" id="muType"></div>
+      <div class="step"><button id="muTierDn">−</button><span id="muTierLbl">T12</span><button id="muTierUp">+</button></div></div>
+    <div class="card">
+      <div class="bh"><span></span><span>ATK</span><span>DEF</span><span>HP</span></div>
+      <div class="bi"><span>Buffs</span><input id="bA" inputmode="numeric"><input id="bD" inputmode="numeric"><input id="bH" inputmode="numeric"></div>
+      <div class="bi"><span>Your debuffs</span><input id="dA" inputmode="numeric"><input id="dD" inputmode="numeric"><input id="dH" inputmode="numeric"></div>
+    </div>
+    <button class="pull" id="pullBtn">Use Marchitect's best pair</button>
+    <div class="x">
+      <h3>All troop types</h3>
+      <div class="card" id="muAll"></div>
+      <h3>Your troops</h3>
+      <div id="muTroops"></div>
+      <p class="note">Buffs are in %, as the game shows them (e.g. 3130 for +3130%). "Your debuffs" are what your generals put on the enemy.</p>
+    </div>
+  </section>
+
   <!-- ===== SCOUT ===== -->
   <section id="v-scout" class="hide">
     <div id="scoutOut"></div>
+    <div id="matchOut"></div>
     <div class="x">
       <h3>Troops by tier</h3>
       <div class="card" id="tierList"></div>
@@ -202,14 +252,15 @@ const short=n=>n>=1e9?sig(n/1e9)+"B":n>=1e6?sig(n/1e6)+"M":n>=1e3?sig(n/1e3)+"K"
 const native=window.Overlay||null;
 
 /* ---------- view: layers / counter, compact / expanded (set by native) ---------- */
-let view=store.get("view","layers")==="scout"?"scout":"layers", expanded=false;
+let view=["scout","muster"].includes(store.get("view","layers"))?store.get("view","layers"):"layers", expanded=false;
 function apply(){
   $("v-layers").classList.toggle("hide",view!=="layers");
   $("v-scout").classList.toggle("hide",view!=="scout");
+  $("v-muster").classList.toggle("hide",view!=="muster");
   document.querySelectorAll(".x").forEach(e=>e.classList.toggle("hide",!expanded));
   reportHeight();
 }
-window.setView=(v,exp)=>{view=v==="scout"?"scout":"layers";expanded=!!exp;store.set("view",view);apply();renderScout()};
+window.setView=(v,exp)=>{view=["scout","muster"].includes(v)?v:"layers";expanded=!!exp;store.set("view",view);apply();renderScout();renderMuster()};
 function reportHeight(){
   if(!native||!native.setContentHeight) return;
   requestAnimationFrame(()=>native.setContentHeight(Math.ceil($("app").getBoundingClientRect().height)));
@@ -293,6 +344,112 @@ window.onMarchRead=max=>{
   if(sizeVal()!==max){ setSize(max); calc(); const el=$("size"); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
 };
 
+/* ================= BATTLE MATH (same as Marchitect's Battle simulator) ================= */
+const TS = {
+  ground:  [[100,300,600],[140,410,810],[190,550,1090],[260,740,1470],[350,1000,1980],[470,1350,2670],[630,1820,3600],[850,2460,4860],[1150,3320,6560],[1550,4480,8860],[1940,5600,11080],[2425,7000,13850],[2910,8400,16620],[3570,10330,20440],[4230,11760,24260],[4920,13670,28240]],
+  ranged:  [[130,100,250],[180,140,340],[240,190,460],[320,260,620],[430,350,840],[580,470,1130],[780,630,1530],[1050,850,2070],[1420,1150,2790],[1920,1550,3770],[2400,1940,4720],[3000,2425,5900],[3450,2780,6780],[4070,3280,8000],[4690,3780,9220],[5460,4390,10730]],
+  mounted: [[220,150,400],[300,200,540],[410,270,730],[550,360,990],[740,490,1340],[1000,660,1810],[1350,890,2440],[1820,1200,3290],[2460,1620,4440],[3320,2190,5990],[4150,2740,7490],[5187,3425,9362],[5800,3830,10480],[6670,4400,12050],[7540,4970,13620],[8780,5780,15850]],
+  siege:   [[100,50,100],[140,70,140],[190,90,190],[260,120,260],[350,160,350],[470,220,470],[630,300,630],[850,410,850],[1150,550,1150],[1550,740,1550],[1940,930,1940],[2425,1162,2425],[2780,1330,2780],[3280,1560,3280],[3780,1790,3780],[4400,2080,4400]],
+};
+const tstat=(type,tier)=>{const r=TS[type][Math.max(1,Math.min(16,tier))-1];return {attack:r[0],defense:r[1],hp:r[2]}};
+const MOD={ground:{ground:1.0,ranged:1.2,mounted:0.7,siege:1.1},ranged:{ground:0.8,ranged:1.0,mounted:1.2,siege:1.1},
+  mounted:{ground:1.2,ranged:0.8,mounted:1.0,siege:1.1},siege:{ground:0.35,ranged:0.4,mounted:0.3,siege:0.6}};
+// a / d: {type,tier,count,atk,def,hp} (buffs in %); debD = debuffs the defender puts on the attacker, debA the reverse (positive %)
+function simulate(a0,d0,debA,debD,rounds){
+  const side=(s,deb)=>{const st=tstat(s.type,s.tier);return {type:s.type,n:s.count,
+    atk:st.attack*Math.max(0.01,1+(s.atk-deb.atk)/100),def:st.defense*Math.max(0.01,1+(s.def-deb.def)/100),hp:st.hp*Math.max(0.01,1+(s.hp-deb.hp)/100)}};
+  const a=side(a0,debD), d=side(d0,debA); let r=0;
+  const hit=(x,y)=>x.n*x.atk*MOD[x.type][y.type]*x.atk/(x.atk+y.def)/y.hp;
+  for(r=1;r<=(rounds||30)&&a.n>0&&d.n>0;r++){const ka=Math.min(d.n,hit(a,d)),kd=Math.min(a.n,hit(d,a));d.n-=ka;a.n-=kd;}
+  return {a,d,rounds:r-1};
+}
+
+/* ================= MUSTER (your side) ================= */
+let mu={buffs:{},deb:{},troops:null}; try{mu=Object.assign(mu,JSON.parse(store.get("muster","{}")))}catch(e){}
+const saveMu=()=>store.set("muster",JSON.stringify(mu));
+function fromApp(){ try{return JSON.parse(localStorage.getItem("evgr2:fromApp")||"null")}catch(e){return null} }
+function myBuffs(t){ return mu.buffs[t]||null; }
+function myDebs(t){ return mu.deb[t]||{atk:0,def:0,hp:0}; }
+function pullFromApp(quiet){
+  const A=fromApp(); if(!A||!A.types){ if(!quiet) $("muSub").textContent="Open Marchitect and set up your generals first."; return false; }
+  TYPES.forEach(t=>{const x=A.types[t]; if(!x) return; mu.buffs[t]={atk:x.atk,def:x.def,hp:x.hp}; mu.deb[t]={atk:x.datk,def:x.ddef,hp:x.dhp}; mu.pair=mu.pair||{}; mu.pair[t]=x.main+(x.asst&&x.asst!=="—"?" + "+x.asst:""); });
+  mu.src="app"; mu.ts=A.ts; if(!sizeVal()&&A.march) setSize(A.march); saveMu(); renderMuster(); calc(); renderScout(); return true;
+}
+$("pullBtn").onclick=()=>pullFromApp(false);
+seg("muType",TYPES.map(t=>[t,glyph(t)]),main,v=>{main=v;store.set("main",v);seg("typeSeg",TYPES.map(t=>[t,glyph(t)]),main,vv=>{main=vv;store.set("main",vv);calc()});calc();renderMuster();renderScout()});
+$("muTierDn").onclick=()=>{setTier(tier-1);renderMuster();renderScout()}; $("muTierUp").onclick=()=>{setTier(tier+1);renderMuster();renderScout()};
+[["bA","buffs","atk"],["bD","buffs","def"],["bH","buffs","hp"],["dA","deb","atk"],["dD","deb","def"],["dH","deb","hp"]].forEach(([id,g,k])=>{
+  $(id).addEventListener("input",()=>{const v=parseInt(String($(id).value).replace(/[^0-9-]/g,""),10);
+    mu[g][main]=Object.assign({atk:0,def:0,hp:0},mu[g][main]||{}); mu[g][main][k]=isNaN(v)?0:Math.abs(v); mu.src="manual"; saveMu(); renderScout(); renderMusterAll();});
+});
+function renderMuster(){
+  const b=myBuffs(main)||{}, d=myDebs(main);
+  [["bA",b.atk],["bD",b.def],["bH",b.hp],["dA",d.atk],["dD",d.def],["dH",d.hp]].forEach(([id,v])=>{ if(document.activeElement!==$(id)) $(id).value=v?v:""; $(id).placeholder="0"; });
+  $("muTierLbl").textContent="T"+tier;
+  $("muTitle").textContent=`${NAME[main]} · T${tier} · ${sizeVal()?short(sizeVal()):"no march size"}`;
+  const pair=mu.pair&&mu.pair[main];
+  $("muSub").textContent=pair&&mu.src==="app"?pair:(myBuffs(main)?"Entered by hand":"Add your buffs, or pull them from Marchitect");
+  renderMusterAll(); renderMyTroops(); reportHeight();
+}
+function renderMusterAll(){
+  $("muAll").innerHTML=`<table class="bt"><tr><th></th><th>Atk</th><th>Def</th><th>HP</th></tr>`+TYPES.map(t=>{const b=myBuffs(t);
+    return `<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td>${["atk","def","hp"].map(k=>`<td class="p">${b&&b[k]?"+"+b[k]+"%":"–"}</td>`).join("")}</tr>`}).join("")+`</table>`;
+}
+// your own troops, read when you scroll your troop list with Scan on
+let scanning=false;
+window.onMineData=d=>{ if(d&&d.e) { mu.troops=d; saveMu(); renderMyTroops(); } };
+window.onScanState=on=>{ scanning=!!on; renderMyTroops(); };
+function renderMyTroops(){
+  const el=$("muTroops"), es=mu.troops&&mu.troops.e||[];
+  let h=`<button class="scan${scanning?" on":""}" id="scanBtn">${scanning?"Scanning… scroll your troop list, tap to stop":"Scan my troops"}</button>`;
+  if(es.length){ const tiers=[...new Set(es.map(x=>x.r))].sort((a,b)=>b-a);
+    h+=`<div class="card" style="margin-top:6px">`+tiers.map(r=>{const s=sums(es.filter(x=>x.r===r));
+      return `<div class="tl"><span class="t">T${r}</span>${TYPES.map(t=>`<span class="c c-${t}${s[t]?"":" z"}">${glyph(t)}${s[t]?short(s[t]):"–"}</span>`).join("")}</div>`}).join("")+`</div>`; }
+  el.innerHTML=h;
+  $("scanBtn").onclick=()=>{ if(native&&native.setMineScan) native.setMineScan(!scanning); else onScanState(!scanning); };
+  reportHeight();
+}
+
+/* ================= MATCHUP (your march vs their top tier) ================= */
+function matchup(send){
+  if(!scout||!scout.e||!scout.e.length) return null;
+  const es=scout.e, st=scout.stats||{}, top=Math.max(...es.map(x=>x.r)), topS=sums(es.filter(x=>x.r===top));
+  const their=enemyPick||mainOf(topS); if(!their) return null;
+  const tb=[0,1,2].map(i=>st[`b|${their}|${i}`]);
+  const mb=myBuffs(send), march=sizeVal();
+  const need=[]; if(!mb) need.push("your buffs (Muster)"); if(!march) need.push("your march size");
+  if(tb.some(v=>v==null)) need.push("their buffs (open the Troop Buff tab)");
+  if(need.length) return {need,their,top};
+  const dOnMe=[0,1,2].map(i=>Math.abs(st[`d|${send}|${i}`]||0));
+  const myD=myDebs(send);
+  const res=simulate({type:send,tier,count:march,atk:mb.atk,def:mb.def,hp:mb.hp},
+    {type:their,tier:top,count:tsum(topS),atk:tb[0],def:tb[1],hp:tb[2]},
+    {atk:myD.atk,def:myD.def,hp:myD.hp},{atk:dOnMe[0],def:dOnMe[1],hp:dOnMe[2]},30);
+  const keep=res.a.n/march, theirLeft=res.d.n/tsum(topS);
+  const verdict=res.a.n>0&&res.d.n<=0?"win":res.d.n>0&&res.a.n<=0?"loss":"close";
+  return {verdict,keep,theirLeft,their,top,count:tsum(topS),rounds:res.rounds};
+}
+function renderMatchup(){
+  const el=$("matchOut"); if(!scout||!scout.e||!scout.e.length){el.innerHTML="";return}
+  const es=scout.e, top=Math.max(...es.map(x=>x.r)), topS=sums(es.filter(x=>x.r===top));
+  const their=enemyPick||mainOf(topS); const send=their?COUNTER[their].send:main;
+  const m=matchup(send); if(!m){el.innerHTML="";return}
+  const lbl={win:"Likely win",loss:"Likely loss",close:"Too close to call"};
+  let h="";
+  if(m.need){ h=`<div class="mu"><div class="k">Matchup</div><div class="need">Needs ${m.need.join(", ")}.</div></div>`; }
+  else if(!expanded){
+    h=`<div class="mu ${m.verdict}"><div class="k">${NAME[send]} vs T${m.top}</div><div class="v">${lbl[m.verdict]}</div>
+      <div class="s">${m.verdict==="win"?`you keep ${Math.round(m.keep*100)}%`:m.verdict==="loss"?`they keep ${Math.round(m.theirLeft*100)}%`:`${Math.round(m.keep*100)}% vs ${Math.round(m.theirLeft*100)}% left`}</div></div>`;
+  } else {
+    const rows=TYPES.map(t=>{const r=matchup(t); if(!r||r.need) return `<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td><td colspan="2" class="z">set buffs in Muster</td></tr>`;
+      return `<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td><td class="${r.verdict==="win"?"p":r.verdict==="loss"?"m":""}">${lbl[r.verdict]}</td><td>${Math.round(r.keep*100)}% / ${Math.round(r.theirLeft*100)}%</td></tr>`}).join("");
+    h=`<h3>Matchup · your ${short(sizeVal())} march vs their T${m.top} (${short(m.count)})</h3>
+      <div class="card"><table class="bt"><tr><th>You send</th><th>Result</th><th>You / them left</th></tr>${rows}</table></div>
+      <p class="note">Same simplified math as Marchitect's Battle simulator: your buffs minus their debuffs vs their top tier and buffs, with the counter table. Traps, wall generals and lower tiers aren't counted, so treat it as an estimate.</p>`;
+  }
+  el.innerHTML=h;
+}
+
 /* ================= SCOUT ================= */
 // scout = {session, total, e:[{n:name, t:type, r:tier, c:count}]}, built natively without double counting
 let scout=null, scoutAt=0; try{const s=JSON.parse(store.get("scout3","null")); if(s){scout=s.d; scoutAt=s.at}}catch(e){}
@@ -365,6 +522,7 @@ function renderScout(){
       return `<div class="tl"><span class="t">T${r}</span>${TYPES.map(t=>`<span class="c c-${t}${s[t]?"":" z"}">${glyph(t)}${s[t]?short(s[t]):"–"}</span>`).join("")}</div>`}).join("");
   } else $("tierList").innerHTML=`<div class="empty">Nothing scanned yet.</div>`;
   renderDefense();
+  renderMatchup();
   buildPick($("enemyPick"));
   reportHeight();
 }
@@ -403,7 +561,9 @@ function buildPick(el){
 setInterval(()=>{ if(view==="scout"&&scout) renderScout(); },4000);
 
 if(native&&native.isAutoRead){ autoOn=native.isAutoRead(); }
-paintAuto(); calc(); renderScout(); apply();
+if(!Object.keys(mu.buffs).length) pullFromApp(true);
+paintAuto(); calc(); renderScout(); renderMuster(); apply();
+window.addEventListener("storage",e=>{ if(e.key==="evgr2:fromApp"&&mu.src!=="manual") pullFromApp(true); });
 window.addEventListener("load",reportHeight);
 document.querySelectorAll("img").forEach(i=>i.addEventListener("load",reportHeight));
 </script>

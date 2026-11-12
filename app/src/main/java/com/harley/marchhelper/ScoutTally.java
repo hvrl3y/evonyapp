@@ -116,9 +116,14 @@ public class ScoutTally {
     private long lastSeen = 0;
     private int session = 0;
     private boolean active = false;
+    private final long gapMs;
+
+    public ScoutTally() { this(SESSION_GAP_MS); }
+
+    public ScoutTally(long gapMs) { this.gapMs = gapMs; }
 
     public boolean isActive(long now) {
-        return active && now - lastSeen < SESSION_GAP_MS;
+        return active && now - lastSeen < gapMs;
     }
 
     public void reset() {
