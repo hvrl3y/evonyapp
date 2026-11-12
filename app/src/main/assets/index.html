@@ -70,7 +70,30 @@
   .copy{display:block;width:100%;margin-top:7px;background:var(--tint);color:#000;border:0;border-radius:8px;
     padding:8px;font:600 13.5px/1.2 -apple-system,system-ui,Roboto,sans-serif}
 
-  /* ---------- COUNTER ---------- */
+  /* ---------- SCOUT ---------- */
+  .vt{display:flex;flex-direction:column;gap:3px}
+  .vt .tot{display:flex;align-items:center;gap:5px}
+  .vt .tot .ic{width:18px;height:18px}
+  .vt .tot b{font:700 16px/1.1 -apple-system,system-ui,Roboto,sans-serif}
+  .vt .tot .rs{margin-left:auto;background:none;border:0;color:var(--tint);font:600 15px/1 system-ui;padding:0 2px}
+  .vt .cov{font-size:10.5px;color:var(--dim);margin:-1px 0 3px}
+  .vt .lab{font-size:10px;color:var(--dim);text-transform:uppercase;margin-top:3px}
+  .vt .ty{position:relative;display:flex;align-items:center;gap:5px;height:22px;padding:0 5px;border-radius:5px;overflow:hidden;background:var(--fill2)}
+  .vt .ty i{position:absolute;left:0;top:0;bottom:0;opacity:.28}
+  .vt .ty .ic{width:16px;height:16px;position:relative}
+  .vt .ty span{position:relative;margin-left:auto;font:700 13.5px/1 -apple-system,system-ui,Roboto,sans-serif;font-variant-numeric:tabular-nums}
+  .vt .ty.z span{opacity:.35}
+  .vt .go{display:flex;align-items:center;gap:5px;margin-top:3px;background:var(--card);border-radius:7px;padding:4px 5px}
+  .vt .go .ic{width:26px;height:26px}
+  .vt .go b{font:700 14px/1.1 -apple-system,system-ui,Roboto,sans-serif;display:block}
+  .vt .go small{font-size:10.5px;color:var(--dim)}
+  .tl{display:flex;align-items:center;gap:4px;padding:4px 6px;position:relative;font-variant-numeric:tabular-nums;font-size:11.5px}
+  .tl+.tl::before{content:"";position:absolute;top:0;left:6px;right:0;height:.5px;background:var(--line)}
+  .tl .t{width:26px;font-weight:700;color:var(--tint)}
+  .tl .c{flex:1;min-width:0;display:flex;align-items:center;gap:1px;font-weight:600;white-space:nowrap}
+  .tl .c .ic{width:12px;height:12px}
+  .tl .c.z{opacity:.25}
+  .tl .sum{width:40px;text-align:right;color:var(--dim)}
   .sh{display:flex;align-items:center;gap:6px;margin-bottom:6px}
   .sh .ic{width:20px;height:20px}
   .sh .tot{font:700 16px/1.1 -apple-system,system-ui,Roboto,sans-serif}
@@ -136,17 +159,14 @@
     </div>
   </section>
 
-  <!-- ===== COUNTER ===== -->
-  <section id="v-counter" class="hide">
+  <!-- ===== SCOUT ===== -->
+  <section id="v-scout" class="hide">
     <div id="scoutOut"></div>
     <div class="x">
       <h3>Troops by tier</h3>
-      <div class="card" id="tierTable"></div>
-      <h3>Pick the enemy's main type yourself</h3>
+      <div class="card" id="tierList"></div>
+      <h3>Or pick their main type</h3>
       <div class="pick" id="enemyPick"></div>
-      <h3>Damage multipliers · community data</h3>
-      <div class="card"><table id="coefTable"></table></div>
-      <p class="note">Attacker (row) vs defender (column). Reported by players, not confirmed by Evony.</p>
     </div>
   </section>
 </div>
@@ -170,18 +190,19 @@ const store={get(k,d){try{const v=localStorage.getItem("mo_"+k);return v===null?
              set(k,v){try{localStorage.setItem("mo_"+k,v)}catch(e){}}};
 const $=id=>document.getElementById(id);
 const fmt=n=>Math.round(n).toLocaleString("en-US");
-const short=n=>n>=1e6?(n/1e6).toFixed(2).replace(/\.?0+$/,"")+"M":n>=1e3?(n/1e3).toFixed(n>=1e5?0:1).replace(/\.0$/,"")+"K":String(Math.round(n));
+const sig=v=>String(+v.toPrecision(3));
+const short=n=>n>=1e9?sig(n/1e9)+"B":n>=1e6?sig(n/1e6)+"M":n>=1e3?sig(n/1e3)+"K":String(Math.round(n));
 const native=window.Overlay||null;
 
 /* ---------- view: layers / counter, compact / expanded (set by native) ---------- */
-let view=store.get("view","layers"), expanded=false;
+let view=store.get("view","layers")==="scout"?"scout":"layers", expanded=false;
 function apply(){
   $("v-layers").classList.toggle("hide",view!=="layers");
-  $("v-counter").classList.toggle("hide",view!=="counter");
+  $("v-scout").classList.toggle("hide",view!=="scout");
   document.querySelectorAll(".x").forEach(e=>e.classList.toggle("hide",!expanded));
   reportHeight();
 }
-window.setView=(v,exp)=>{view=v;expanded=!!exp;store.set("view",v);apply()};
+window.setView=(v,exp)=>{view=v==="scout"?"scout":"layers";expanded=!!exp;store.set("view",view);apply();renderScout()};
 function reportHeight(){
   if(!native||!native.setContentHeight) return;
   requestAnimationFrame(()=>native.setContentHeight(Math.ceil($("app").getBoundingClientRect().height)));
@@ -259,75 +280,83 @@ function paintAuto(){
   $("enableBtn").classList.toggle("hide",autoOn||!native);
 }
 $("enableBtn").onclick=()=>{ native&&native.requestAutoRead&&native.requestAutoRead(); };
-window.onAutoState=on=>{autoOn=!!on;paintAuto();calc();renderCounter()};
+window.onAutoState=on=>{autoOn=!!on;paintAuto();calc();renderScout()};
 window.onMarchRead=max=>{
   max=parseInt(max,10); if(!max) return;
   if(sizeVal()!==max){ setSize(max); calc(); const el=$("size"); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
 };
 
-/* ================= COUNTER ================= */
-// scout = {session, e:[{n:name, t:type, r:tier(0=unknown), c:count}]}, rebuilt natively without double counting
-let scout=null, scoutAt=0; try{const s=JSON.parse(store.get("scout2","null")); if(s){scout=s.d; scoutAt=s.at}}catch(e){}
+/* ================= SCOUT ================= */
+// scout = {session, total, e:[{n:name, t:type, r:tier, c:count}]}, built natively without double counting
+let scout=null, scoutAt=0; try{const s=JSON.parse(store.get("scout3","null")); if(s){scout=s.d; scoutAt=s.at}}catch(e){}
 let enemyPick=store.get("enemy","");
 window.onScoutData=d=>{
-  if(!d||!d.e||!d.e.length){ scout=null; scoutAt=0; store.set("scout2","null"); }
+  if(!d||!d.e||!d.e.length){ scout=null; scoutAt=0; store.set("scout3","null"); }
   else { if(!scout||scout.session!==d.session){ enemyPick=""; store.set("enemy",""); }
-    scout=d; scoutAt=Date.now(); store.set("scout2",JSON.stringify({d,at:scoutAt})); }
-  renderCounter();
+    scout=d; scoutAt=Date.now(); store.set("scout3",JSON.stringify({d,at:scoutAt})); }
+  renderScout();
 };
-function sums(entries){ const s={ground:0,ranged:0,mounted:0,siege:0}; entries.forEach(x=>s[x.t]+=x.c); return s; }
+function sums(es){ const s={ground:0,ranged:0,mounted:0,siege:0}; es.forEach(x=>s[x.t]+=x.c); return s; }
 function mainOf(s){ let b=null; TYPES.forEach(t=>{ if(s[t]>0&&(!b||s[t]>s[b])) b=t }); return b; }
+function tsum(s){ return TYPES.reduce((a,t)=>a+s[t],0); }
 function ago(ts){ const m=Math.round((Date.now()-ts)/60000); return m<1?"just now":m<60?m+" min ago":Math.round(m/60)+" h ago"; }
+function typeRows(s){
+  const tot=tsum(s)||1;
+  return TYPES.map(t=>{const p=Math.round(s[t]/tot*100);
+    return `<div class="ty${p?"":" z"}"><i class="b-${t}" style="width:${s[t]/tot*100}%"></i>${glyph(t)}<span class="c-${t}">${p}%</span></div>`}).join("");
+}
 function mixRow(label,right,s){
-  const tot=TYPES.reduce((a,t)=>a+s[t],0)||1;
+  const tot=tsum(s)||1;
   return `<div class="mixrow"><div class="lab"><span>${label}</span><span>${right}</span></div>
     <div class="stack">${TYPES.map(t=>`<i class="b-${t}" style="width:${s[t]/tot*100}%"></i>`).join("")}</div>
     <div class="pcts">${TYPES.map(t=>{const p=Math.round(s[t]/tot*100);return `<span class="c-${t}${p?"":" z"}">${glyph(t)}${p}%</span>`}).join("")}</div></div>`;
 }
-function renderCounter(){
-  const out=$("scoutOut"), entries=scout?scout.e:[];
-  let enemy=enemyPick||null, basis="";
+function renderScout(){
+  const out=$("scoutOut"), es=scout?scout.e:[];
+  let enemy=enemyPick||null, basis=enemyPick?"picked":"";
   let h="";
-  if(entries.length){
-    const all=sums(entries), tot=TYPES.reduce((a,t)=>a+all[t],0);
-    const top=Math.max(0,...entries.map(x=>x.r||0));
-    const topS=top?sums(entries.filter(x=>x.r===top)):null;
+  if(es.length){
+    const all=sums(es), read=tsum(all), total=scout.total||0;
+    const top=Math.max(...es.map(x=>x.r));
+    const topS=sums(es.filter(x=>x.r===top));
     const live=Date.now()-scoutAt<4000;
-    h+=`<div class="sh">${glyph("scout")}<div class="grow"><div class="tot">${short(tot)} troops</div>
-      <div class="sub">${live?"Reading… keep scrolling":"Scouted "+ago(scoutAt)} · ${entries.length} troop line${entries.length>1?"s":""}</div></div>
-      <button class="reset" id="resetBtn">Reset</button></div>`;
-    if(topS) h+=mixRow(`Top tier · T${top}`,short(TYPES.reduce((a,t)=>a+topS[t],0)),topS);
-    h+=mixRow("All troops",short(tot),all);
-    if(!enemy){ enemy=mainOf(topS||all); basis=topS?`T${top}`:"all"; }
+    const cov=total?Math.min(100,Math.round(read/total*100)):0;
+    const covTxt=total?`${cov}% read${live&&cov<100?" · scroll on":""}`:(live?"reading…":"scouted "+ago(scoutAt));
+    if(!enemy){ enemy=mainOf(topS); basis="T"+top; }
+    const c=COUNTER[enemy];
+    if(!expanded){
+      h+=`<div class="vt"><div class="tot">${glyph("scout")}<b>${short(total||read)}</b><button class="rs" id="resetBtn" title="New report">↺</button></div>
+        <div class="cov">${covTxt}</div>
+        <div class="lab">Top tier · T${top}</div>${typeRows(topS)}
+        <div class="lab">Send</div>
+        <div class="go">${badge(c.send)}<div><b class="c-${c.send}">${NAME[c.send]}</b>${c.alt?`<small>or ${NAME[c.alt]}</small>`:""}</div></div></div>`;
+    } else {
+      h+=`<div class="sh">${glyph("scout")}<div class="grow"><div class="tot">${short(total||read)} troops</div>
+        <div class="sub">${covTxt} · ${es.length} troop lines</div></div><button class="reset" id="resetBtn">Reset</button></div>`;
+      h+=mixRow(`Top tier · T${top}`,short(tsum(topS)),topS);
+      h+=mixRow("All troops read",short(read),all);
+      h+=`<div class="send">${badge(c.send)}<div><div class="k">vs ${NAME[enemy]} · ${basis} · send</div>
+        <div class="v c-${c.send}">${NAME[c.send]}${c.alt?` <small>or ${NAME[c.alt]}</small>`:""}</div></div></div>
+        <div class="why">${c.why}${c.avoid?` Avoid ${NAME[c.avoid]}.`:""}</div>`;
+    }
   } else {
-    h+=`<div class="sh">${glyph("scout")}<div class="grow"><div class="tot" style="font-size:14px">No scout yet</div>
-      <div class="sub">${autoOn?"Open a scout report and scroll through it.":"Turn on auto-read to scan scout reports."}</div></div></div>`;
-  }
-  if(enemyPick) basis="picked";
-  if(enemy){ const c=COUNTER[enemy];
-    h+=`<div class="send">${badge(c.send)}<div><div class="k">vs ${NAME[enemy]} · ${basis} · send</div>
-      <div class="v c-${c.send}">${NAME[c.send]}${c.alt?` <small>or ${NAME[c.alt]}</small>`:""}</div></div></div>`;
-    if(expanded) h+=`<div class="why">${c.why}${c.avoid?` Avoid ${NAME[c.avoid]}.`:""}</div>`;
-  } else if(!entries.length){
-    h+=`<div class="pick" id="quickPick"></div>`;
+    h+=expanded
+      ? `<div class="sh">${glyph("scout")}<div class="grow"><div class="tot" style="font-size:14px">No scout yet</div>
+          <div class="sub">${autoOn?"Open a scout report and scroll through the troop list.":"Turn on auto-read to scan scout reports."}</div></div></div>`
+      : `<div class="vt"><div class="tot">${glyph("scout")}<b style="font-size:13px">No scout</b></div>
+          <div class="cov">${autoOn?"Open a scout report and scroll the troop list.":"Auto-read is off."}</div></div>`;
+    if(enemy){ const c=COUNTER[enemy];
+      h+=`<div class="vt"><div class="lab">vs ${NAME[enemy]} · send</div><div class="go">${badge(c.send)}<div><b class="c-${c.send}">${NAME[c.send]}</b></div></div></div>`; }
   }
   out.innerHTML=h;
   const rb=$("resetBtn"); if(rb) rb.onclick=()=>{ if(native&&native.resetScout) native.resetScout(); else window.onScoutData(null); };
-  const qp=$("quickPick"); if(qp) buildPick(qp);
 
-  // expanded: troops by tier
-  if(entries.length){
-    const tiers=[...new Set(entries.map(x=>x.r||0))].sort((a,b)=>b-a);
-    let t=`<table><tr><th>Tier</th>${TYPES.map(x=>`<th class="c-${x}">${ABBR[x]}</th>`).join("")}</tr>`;
-    tiers.forEach(r=>{ const s=sums(entries.filter(x=>(x.r||0)===r));
-      t+=`<tr><td>${r?"T"+r:"?"}</td>${TYPES.map(x=>`<td class="${s[x]?"":"z"}">${s[x]?short(s[x]):"–"}</td>`).join("")}</tr>`; });
-    $("tierTable").innerHTML=t+"</table>";
-  } else $("tierTable").innerHTML=`<div class="empty">Nothing scanned yet.</div>`;
-
-  let c=`<tr><th>Atk \\ Def</th>${TYPES.map(t=>`<th>${ABBR[t]}</th>`).join("")}</tr>`;
-  TYPES.forEach(a=>{c+=`<tr><td class="c-${a}">${NAME[a]}</td>`+TYPES.map(d=>{const v=COEF[a][d];
-    const cls=d===enemy&&v>=1.1?"hi":d===enemy&&v<1?"lo":"";return `<td class="${cls}">${v}</td>`}).join("")+"</tr>"});
-  $("coefTable").innerHTML=c;
+  // tight tier list: T15  [G]11.4M [R]8.1M [M]8.1M [S]2.7M   30.3M
+  if(es.length){
+    const tiers=[...new Set(es.map(x=>x.r))].sort((a,b)=>b-a);
+    $("tierList").innerHTML=tiers.map(r=>{const s=sums(es.filter(x=>x.r===r));
+      return `<div class="tl"><span class="t">T${r}</span>${TYPES.map(t=>`<span class="c c-${t}${s[t]?"":" z"}">${glyph(t)}${s[t]?short(s[t]):"–"}</span>`).join("")}</div>`}).join("");
+  } else $("tierList").innerHTML=`<div class="empty">Nothing scanned yet.</div>`;
   buildPick($("enemyPick"));
   reportHeight();
 }
@@ -335,13 +364,13 @@ function buildPick(el){
   el.innerHTML="";
   TYPES.forEach(t=>{const b=document.createElement("button");b.innerHTML=glyph(t)+NAME[t];
     if(t===enemyPick)b.classList.add("on");
-    b.onclick=()=>{enemyPick=enemyPick===t?"":t;store.set("enemy",enemyPick);renderCounter()};
+    b.onclick=()=>{enemyPick=enemyPick===t?"":t;store.set("enemy",enemyPick);renderScout()};
     el.appendChild(b)});
 }
-setInterval(()=>{ if(view==="counter"&&scout) renderCounter(); },5000);
+setInterval(()=>{ if(view==="scout"&&scout) renderScout(); },4000);
 
 if(native&&native.isAutoRead){ autoOn=native.isAutoRead(); }
-paintAuto(); calc(); renderCounter(); apply();
+paintAuto(); calc(); renderScout(); apply();
 window.addEventListener("load",reportHeight);
 document.querySelectorAll("img").forEach(i=>i.addEventListener("load",reportHeight));
 </script>

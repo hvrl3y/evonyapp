@@ -150,12 +150,21 @@ public class ScreenReader {
 
     private void parse(Text text) {
         String all = text.getText().toLowerCase(Locale.US);
-        List<String> rows = rows(text);
-        boolean otherScreen = all.contains("preset") || all.contains("select troops") || all.contains("march size");
-        if (tally.feed(rows, all.contains("scout"), otherScreen, System.currentTimeMillis()))
-            listener.onScout(tally.toJson());
+        boolean scout = all.contains("scout report") || all.contains("scout");
+        if (scout) {
+            List<ScoutTally.W> ws = new ArrayList<>();
+            for (Text.TextBlock b : text.getTextBlocks())
+                for (Text.Line l : b.getLines())
+                    for (Text.Element e : l.getElements()) {
+                        Rect r = e.getBoundingBox();
+                        if (r != null) ws.add(new ScoutTally.W(e.getText(), r.left, r.top, r.right, r.bottom));
+                    }
+            if (tally.feed(ScoutTally.extract(ws), true, System.currentTimeMillis()))
+                listener.onScout(tally.toJson());
+            return;
+        }
         // Only trust march numbers on troop / march screens.
-        if (all.contains("preset") || all.contains("troops") || all.contains("march")) parseMarch(rows);
+        if (all.contains("preset") || all.contains("troops") || all.contains("march")) parseMarch(rows(text));
     }
 
     /** Rebuild visual rows from words, so text on one line of the screen is read together. */

@@ -1,77 +1,73 @@
 package com.harley.marchhelper;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Builds one scout report out of many screen reads.
  *
- * Every troop line is remembered by its name, so the same troop seen again (scrolling back up,
- * or the same frame read twice) updates that one entry instead of being added again. Each entry's
- * count is the value read most often, which irons out the odd misread digit. Names that differ by
- * a letter or two (a misread name) are treated as the same troop.
+ * Evony lists troops as rows of "Lv15  Dragon Vanguards  11,414,567". Each read, we find every
+ * "Lv##" word, take the words to its right up to the first count (so map text to the left or
+ * right of the report is never mixed in), and file the troop under its tier + name. Seeing the
+ * same troop again (scrolling back up) updates that one entry instead of adding it twice; its
+ * count is the value read most often, which irons out an odd misread digit. Rows cut off at the
+ * edge of the list are skipped. The report's own "Troops 2,112,680,392" total is read too, so we
+ * can show how much of the army has been scanned.
  *
  * Pure Java (no Android), so it can be tested on its own.
  */
 public class ScoutTally {
 
-    /** A session ends when no scout text has been seen for this long. */
     static final long SESSION_GAP_MS = 8000;
-
     static final String[] TYPE_NAMES = {"ground", "ranged", "mounted", "siege"};
 
-    // Word starts that identify a troop type in Evony troop names.
+    // Ranged / mounted / siege are recognised by name; anything else in the troop list is ground
+    // (ground troop names change every tier: Warriors, Conscripts, ... Vanguards).
     private static final String[][] STARTS = {
-            /* ground  */ {"ground", "guard", "infantr", "sword", "spear", "pike", "warrior", "legion", "hoplite",
-                           "phalanx", "conscript", "militia", "halberd", "axem", "berserk", "footm", "sentinel"},
-            /* ranged  */ {"ranged", "archer", "bowm", "crossbow", "arbalest", "marksm", "slinger", "longbow",
-                           "sharpshoot", "musket", "skirmish"},
-            /* mounted */ {"mounted", "cavalr", "rider", "knight", "horsem", "lancer", "cataphract", "hussar",
-                           "cuirassier", "dragoon", "cavalier"},
-            /* siege   */ {"siege", "catapult", "ballist", "trebuch", "battering", "onager", "cannon", "mangonel",
-                           "bombard", "scorpion"},
+            /* ground  */ {},
+            /* ranged  */ {"archer", "bowm", "crossbow", "arbalest", "marksm", "slinger", "longbow", "sharpshoot", "musket", "ranger"},
+            /* mounted */ {"cavalr", "cavalier", "rider", "knight", "horsem", "lancer", "cataphract", "hussar", "cuirassier", "dragoon", "mounted"},
+            /* siege   */ {"catapult", "ballist", "trebuch", "battering", "onager", "cannon", "mangonel", "bombard", "siege", "scorpion"},
     };
-    // Whole words only (too short to match by start).
-    private static final String[][] EXACT = {
-            {"guards"}, {"bows"}, {"cav", "horse", "horses"}, {"ram", "rams", "machine", "machines"},
-    };
-    private static final Set<String> ROMAN = new HashSet<>();
-    private static final Map<String, Integer> ROMAN_VAL = new HashMap<>();
 
-    static {
-        String[] r = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI"};
-        for (int i = 0; i < r.length; i++) {
-            ROMAN.add(r[i]);
-            ROMAN_VAL.put(r[i], i + 1);
+    /** A word on screen with its box (pixels). */
+    public static class W {
+        final String t;
+        final int l, r, top, bot;
+
+        public W(String t, int l, int top, int r, int bot) {
+            this.t = t; this.l = l; this.r = r; this.top = top; this.bot = bot;
         }
+
+        int cy() { return (top + bot) / 2; }
+        int h() { return Math.max(1, bot - top); }
+    }
+
+    static class Line {
+        int tier, type;
+        String name;
+        long count;
+    }
+
+    static class Read {
+        final List<Line> lines = new ArrayList<>();
+        long total = -1;
     }
 
     static class Entry {
+        int tier, type;
         String name;
-        int type;
-        int tier; // 0 = unknown
         final Map<Long, Integer> votes = new HashMap<>();
 
-        long count() {
-            long best = 0;
-            int bestN = -1;
-            for (Map.Entry<Long, Integer> e : votes.entrySet()) {
-                // most-read value wins; on a tie prefer the larger number
-                if (e.getValue() > bestN || (e.getValue() == bestN && e.getKey() > best)) {
-                    best = e.getKey();
-                    bestN = e.getValue();
-                }
-            }
-            return best;
-        }
+        long count() { return best(votes); }
     }
 
     private final List<Entry> entries = new ArrayList<>();
+    private final Map<Long, Integer> totalVotes = new HashMap<>();
     private long lastSeen = 0;
     private int session = 0;
     private boolean active = false;
@@ -82,124 +78,160 @@ public class ScoutTally {
 
     public void reset() {
         entries.clear();
+        totalVotes.clear();
         active = false;
         lastSeen = 0;
     }
 
-    public int session() {
-        return session;
-    }
+    // ------------------------------------------------------------------ reading one frame
 
-    /**
-     * Feed one screen read. {@code scoutText} is whether the frame mentions "scout";
-     * {@code otherScreen} is whether it's clearly a different screen (presets, march setup).
-     * Returns true if the tally changed.
-     */
-    public boolean feed(List<String> rows, boolean scoutText, boolean otherScreen, long now) {
-        if (otherScreen) return false;
-        boolean inSession = isActive(now);
-        if (!inSession && !scoutText) return false;
-        if (!inSession) { // a new report: start over
-            entries.clear();
-            session++;
-            active = true;
-        }
+    /** Pull troop rows and the "Troops" total out of one frame's words. */
+    static Read extract(List<W> words) {
+        Read out = new Read();
 
-        boolean changed = false, sawTroop = false;
-        for (String row : rows) {
-            for (Parsed p : parseRow(row)) {
-                sawTroop = true;
-                changed |= add(p);
-            }
-        }
-        if (scoutText || sawTroop) lastSeen = now;
-        return changed;
-    }
-
-    static class Parsed {
-        String name;
-        int type, tier;
-        long count;
-    }
-
-    /** Split one visual row into troop entries: [name words][tier?][count]. */
-    static List<Parsed> parseRow(String row) {
-        List<Parsed> out = new ArrayList<>();
-        List<String> nameWords = new ArrayList<>();
-        int type = -1, tier = 0;
-        long pending = -1;
-        for (String raw : row.trim().split("\\s+")) {
-            if (raw.isEmpty()) continue;
-            String w = raw.replaceAll("^[^\\p{Alnum}]+|[^\\p{Alnum}.,]+$", "");
-            if (w.isEmpty()) continue;
-
-            int t = tierOf(w);
-            if (t > 0) { tier = t; continue; }
-
-            long n = countOf(w);
-            if (n >= 0) {
-                if (type >= 0) {
-                    if (n >= 1) out.add(make(nameWords, type, tier, n));
-                    nameWords.clear();
-                    type = -1;
-                    tier = 0;
-                } else {
-                    pending = n; // number shown before the name
-                    nameWords.clear();
+        // 1. find the "Lv##" words (tolerating Lv 15, LV15, Lvl5, Lv.15 ...)
+        List<int[]> lv = new ArrayList<>(); // {wordIndex, tier, rightEdge}
+        for (int i = 0; i < words.size(); i++) {
+            W w = words.get(i);
+            int tier = lvTier(w.t);
+            int right = w.r;
+            if (tier == 0 && w.t.matches("(?i)[l1I][vy]l?[.:]?")) { // "Lv" then "15" as a separate word
+                W n = nextRight(words, w);
+                if (n != null && n.l - w.r < w.h()) {
+                    tier = parseTierDigits(n.t);
+                    right = n.r;
                 }
-                continue;
             }
-
-            String lw = w.toLowerCase(Locale.US).replaceAll("[^a-z']", "");
-            if (lw.isEmpty()) continue;
-            int ty = typeOf(lw);
-            if (ty >= 0 && type >= 0 && type != ty) {
-                // a second troop name before any number: the first had its count in front
-                if (pending >= 1) out.add(make(nameWords, type, tier, pending));
-                nameWords.clear();
-                tier = 0;
-                pending = -1;
-            }
-            nameWords.add(lw);
-            if (ty >= 0) type = ty;
+            if (tier > 0) lv.add(new int[]{i, tier, right});
         }
-        if (type >= 0 && pending >= 1) out.add(make(nameWords, type, tier, pending));
+        if (!lv.isEmpty()) {
+            // rows cut off at the top/bottom of the list read shorter than the rest: skip them
+            List<Integer> hs = new ArrayList<>();
+            for (int[] x : lv) hs.add(words.get(x[0]).h());
+            hs.sort(Integer::compare);
+            int median = hs.get(hs.size() / 2);
+
+            for (int[] x : lv) {
+                W start = words.get(x[0]);
+                if (start.h() < median * 0.75) continue;
+                List<W> row = rightOf(words, start, x[2]);
+                List<String> name = new ArrayList<>();
+                long count = -1;
+                int prevR = x[2];
+                for (W w : row) {
+                    if (w.l - prevR > start.h() * 16) break; // too far: not part of this row
+                    long n = countOf(w.t);
+                    if (n >= 0) {
+                        if (w.h() >= median * 0.75) count = n;
+                        break;
+                    }
+                    String lw = w.t.toLowerCase(Locale.US).replaceAll("[^a-z]", "");
+                    if (!lw.isEmpty()) name.add(lw);
+                    prevR = w.r;
+                }
+                if (count < 0 || name.isEmpty()) continue;
+                Line line = new Line();
+                line.tier = x[1];
+                line.name = String.join(" ", name);
+                line.type = typeOf(name);
+                line.count = count;
+                out.lines.add(line);
+            }
+        }
+
+        // 2. the report total: "Troops   2,112,680,392"
+        for (W w : words) {
+            if (!w.t.equalsIgnoreCase("troops")) continue;
+            for (W n : rightOf(words, w, w.r)) {
+                long v = countOf(n.t);
+                if (v >= 0) {
+                    if (n.t.contains(",") || n.t.contains(".")) out.total = v;
+                    break;
+                }
+            }
+        }
         return out;
     }
 
-    private static Parsed make(List<String> words, int type, int tier, long n) {
-        Parsed p = new Parsed();
-        p.name = String.join(" ", words);
-        p.type = type;
-        p.tier = tier;
-        p.count = n;
-        return p;
+    private static List<W> rightOf(List<W> words, W anchor, int fromX) {
+        List<W> row = new ArrayList<>();
+        int tol = (int) (anchor.h() * 0.6);
+        for (W w : words) {
+            if (w == anchor || w.l < fromX - 2) continue;
+            if (Math.abs(w.cy() - anchor.cy()) <= tol) row.add(w);
+        }
+        row.sort(Comparator.comparingInt(a -> a.l));
+        return row;
     }
 
-    private boolean add(Parsed p) {
+    private static W nextRight(List<W> words, W anchor) {
+        List<W> r = rightOf(words, anchor, anchor.r);
+        return r.isEmpty() ? null : r.get(0);
+    }
+
+    // ------------------------------------------------------------------ building the report
+
+    /**
+     * Feed one frame. {@code scoutScreen}: the frame shows "Scout Report".
+     * Returns true if the report changed.
+     */
+    public boolean feed(Read read, boolean scoutScreen, long now) {
+        if (!scoutScreen) return false;
+        long curTotal = best(totalVotes);
+        boolean newReport = !isActive(now)
+                || (read.total > 0 && curTotal > 0 && Math.abs(read.total - curTotal) > curTotal / 100);
+        if (newReport) {
+            entries.clear();
+            totalVotes.clear();
+            session++;
+            active = true;
+        }
+        lastSeen = now;
+        boolean changed = newReport;
+        if (read.total > 0) {
+            long before = best(totalVotes);
+            totalVotes.merge(read.total, 1, Integer::sum);
+            changed |= best(totalVotes) != before;
+        }
+        for (Line l : read.lines) changed |= add(l);
+        return changed;
+    }
+
+    private boolean add(Line l) {
         Entry match = null;
         for (Entry e : entries) {
-            if (e.type != p.type) continue;
-            if (e.tier != 0 && p.tier != 0 && e.tier != p.tier) continue;
-            if (similar(e.name, p.name)) { match = e; break; }
+            if (e.tier == l.tier && similar(e.name, l.name)) { match = e; break; }
         }
         boolean isNew = match == null;
         if (isNew) {
             match = new Entry();
-            match.name = p.name;
-            match.type = p.type;
+            match.tier = l.tier;
+            match.name = l.name;
+            match.type = l.type;
             entries.add(match);
         }
-        boolean tierChanged = match.tier == 0 && p.tier != 0;
-        if (tierChanged) match.tier = p.tier;
         long before = match.count();
-        match.votes.merge(p.count, 1, Integer::sum);
-        return isNew || tierChanged || match.count() != before;
+        match.votes.merge(l.count, 1, Integer::sum);
+        return isNew || match.count() != before;
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    static long best(Map<Long, Integer> votes) {
+        long best = 0;
+        int n = -1;
+        for (Map.Entry<Long, Integer> e : votes.entrySet()) {
+            if (e.getValue() > n || (e.getValue() == n && e.getKey() > best)) {
+                best = e.getKey();
+                n = e.getValue();
+            }
+        }
+        return best;
     }
 
     static boolean similar(String a, String b) {
         if (a.equals(b)) return true;
-        int max = Math.max(1, Math.max(a.length(), b.length()) / 8);
+        int max = Math.max(1, Math.max(a.length(), b.length()) / 6);
         return Math.abs(a.length() - b.length()) <= max && lev(a, b) <= max;
     }
 
@@ -217,53 +249,48 @@ public class ScoutTally {
         return prev[b.length()];
     }
 
-    static int typeOf(String lw) {
-        for (int t = 0; t < 4; t++) {
-            for (String k : EXACT[t]) if (lw.equals(k)) return t;
-            for (String k : STARTS[t]) if (lw.startsWith(k)) return t;
-        }
-        return -1;
+    static int typeOf(List<String> nameWords) {
+        for (int t = 1; t < 4; t++)
+            for (String w : nameWords)
+                for (String k : STARTS[t])
+                    if (w.startsWith(k)) return t;
+        return 0; // ground
     }
 
-    /** "XIV", "T14", "Lv14" -> 14; anything else -> 0. A lone "I" is ignored (too easy to misread). */
-    static int tierOf(String w) {
-        String u = w.toUpperCase(Locale.US);
-        if (!u.equals("I") && ROMAN.contains(u)) return ROMAN_VAL.get(u);
-        if (u.matches("T\\d{1,2}") || u.matches("LV\\.?\\d{1,2}")) {
-            int v = Integer.parseInt(u.replaceAll("\\D", ""));
-            return v >= 1 && v <= 16 ? v : 0;
-        }
-        return 0;
+    /** "Lv15", "LV15", "Lv.15", "Lvl5", "Lv1S" -> 15; otherwise 0. */
+    static int lvTier(String w) {
+        String s = w.trim();
+        if (!s.matches("(?i)^[l1I][vy][.:]?[0-9lIOoSs|]{1,2}$")) return 0;
+        return parseTierDigits(s.replaceFirst("(?i)^[l1I][vy][.:]?", ""));
     }
 
-    /** "1,735,813", "x120,000", "1.7M", "250K", "5000" -> value; not a number -> -1. */
+    static int parseTierDigits(String d) {
+        String s = d.replaceAll("[lI|]", "1").replaceAll("[Oo]", "0").replaceAll("[Ss]", "5");
+        if (!s.matches("\\d{1,2}")) return 0;
+        int v = Integer.parseInt(s);
+        return v >= 1 && v <= 16 ? v : 0;
+    }
+
+    /** "1,735,813" / "1.735.813" / "120" -> value; anything else (incl. "35K", "Lv15") -> -1. */
     static long countOf(String w) {
-        String s = w.replaceFirst("^[xX×]", "");
-        try {
-            if (s.matches("\\d{1,3}(,\\d{3})+") || s.matches("\\d{1,3}(\\.\\d{3}){2,}") || s.matches("\\d+"))
-                return Long.parseLong(s.replaceAll("\\D", ""));
-            if (s.matches("\\d+(\\.\\d+)?[kKmM]")) {
-                double v = Double.parseDouble(s.substring(0, s.length() - 1));
-                char u = Character.toLowerCase(s.charAt(s.length() - 1));
-                return Math.round(v * (u == 'k' ? 1e3 : 1e6));
-            }
-        } catch (Exception ignored) {
-        }
+        String s = w.trim().replaceFirst("^[xX×]", "");
+        if (s.matches("\\d{1,3}(,\\d{3})+") || s.matches("\\d{1,3}(\\.\\d{3})+") || s.matches("\\d{1,3}"))
+            return Long.parseLong(s.replaceAll("\\D", ""));
         return -1;
     }
 
-    /** JSON for the panel: [{"n":name,"t":type,"r":tier,"c":count}, ...] plus the session number. */
+    /** JSON for the panel. */
     public String toJson() {
-        StringBuilder sb = new StringBuilder("{\"session\":").append(session).append(",\"e\":[");
+        StringBuilder sb = new StringBuilder("{\"session\":").append(session)
+                .append(",\"total\":").append(best(totalVotes)).append(",\"e\":[");
         boolean first = true;
         for (Entry e : entries) {
             long c = e.count();
             if (c <= 0) continue;
             if (!first) sb.append(',');
             first = false;
-            sb.append("{\"n\":\"").append(e.name.replaceAll("[\"\\\\]", "")).append("\",\"t\":\"")
-                    .append(TYPE_NAMES[e.type]).append("\",\"r\":").append(e.tier)
-                    .append(",\"c\":").append(c).append('}');
+            sb.append("{\"n\":\"").append(e.name).append("\",\"t\":\"").append(TYPE_NAMES[e.type])
+                    .append("\",\"r\":").append(e.tier).append(",\"c\":").append(c).append('}');
         }
         return sb.append("]}").toString();
     }

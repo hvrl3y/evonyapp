@@ -78,7 +78,7 @@ public class OverlayService extends Service {
     private LinearLayout menu;
     private WindowManager.LayoutParams menuLp;
     private boolean menuShown = false;
-    private View menuLayers, menuCounter;
+    private View menuLayers, menuScout;
 
     // panel
     private LinearLayout panel;
@@ -87,7 +87,7 @@ public class OverlayService extends Service {
     private TextView title, expandBtn;
     private boolean panelShown = false;
     private boolean keyboard = false;
-    private String view = "layers";           // layers | counter
+    private String view = "layers";           // layers | scout
     private boolean expanded = false;
     private int contentHeightDp = 200;
 
@@ -114,6 +114,7 @@ public class OverlayService extends Service {
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         prefs = getSharedPreferences("overlay", MODE_PRIVATE);
         view = prefs.getString("view", "layers");
+        if (!view.equals("scout")) view = "layers";
         expanded = prefs.getBoolean("exp_" + view, false);
         goForeground(false);
         createBubble();
@@ -337,12 +338,12 @@ public class OverlayService extends Service {
         menu.setBackground(bg);
         menu.setElevation(dp(8));
         menuLayers = menuItem(R.drawable.badge_layers, "Layers", "layers");
-        menuCounter = menuItem(R.drawable.badge_scout, "Counter", "counter");
+        menuScout = menuItem(R.drawable.badge_scout, "Scout", "scout");
         menu.addView(menuLayers);
         LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         gap.topMargin = dp(4);
-        menu.addView(menuCounter, gap);
+        menu.addView(menuScout, gap);
         menuLp = overlayParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     }
 
@@ -369,8 +370,8 @@ public class OverlayService extends Service {
     }
 
     private void paintMenu() {
-        for (View v : new View[]{menuLayers, menuCounter}) {
-            boolean on = panelShown && ((v == menuLayers && view.equals("layers")) || (v == menuCounter && view.equals("counter")));
+        for (View v : new View[]{menuLayers, menuScout}) {
+            boolean on = panelShown && ((v == menuLayers && view.equals("layers")) || (v == menuScout && view.equals("scout")));
             GradientDrawable bg = new GradientDrawable();
             bg.setColor(on ? Color.parseColor("#2EF2B544") : Color.TRANSPARENT);
             if (on) bg.setStroke(dp(1), C_TINT);
@@ -541,7 +542,8 @@ public class OverlayService extends Service {
     }
 
     private int width() {
-        return Math.min(dp(expanded ? 300 : 212), screen().x - dp(16));
+        int w = view.equals("scout") ? (expanded ? 264 : 124) : (expanded ? 300 : 212);
+        return Math.min(dp(w), screen().x - dp(16));
     }
 
     private int height() {
@@ -549,7 +551,7 @@ public class OverlayService extends Service {
     }
 
     private void paintHeader() {
-        title.setText(view.equals("counter") ? "Counter" : "Layers");
+        title.setText(view.equals("scout") ? "Scout" : "Layers");
         expandBtn.setRotation(expanded ? -90 : 90);
     }
 
@@ -561,7 +563,18 @@ public class OverlayService extends Service {
             relayout();
             pushView();
         }
+        if (!panelShown) anchorBelowBubble();
         showPanel();
+    }
+
+    /** Drop the panel down just below the bubble (or above it if there's no room), on the bubble's side. */
+    private void anchorBelowBubble() {
+        Point s = screen();
+        int bs = dp(BUBBLE_DP);
+        boolean left = bubbleLp.x + bs / 2 < s.x / 2;
+        panelLp.x = left ? Math.max(0, bubbleLp.x) : Math.max(0, bubbleLp.x + bs - panelLp.width);
+        int below = bubbleLp.y + bs + dp(4);
+        panelLp.y = below + panelLp.height <= s.y - dp(16) ? below : Math.max(0, bubbleLp.y - panelLp.height - dp(4));
     }
 
     private void setExpanded(boolean on) {

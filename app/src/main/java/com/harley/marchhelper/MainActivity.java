@@ -65,9 +65,9 @@ public class MainActivity extends Activity {
         card.addView(divider());
         card.addView(row("2", "Tap Start, then allow screen capture so the overlay can read Evony. The gold bubble appears."));
         card.addView(divider());
-        card.addView(row("3", "In Evony, tap the bubble. Drag the header to move the panel. S shows just your layer numbers, M adds march size and the counter, L is the full view."));
+        card.addView(row("3", "In Evony, tap the bubble and pick Layers or Scout. Each opens a small panel under the bubble; › expands it, — tucks it away."));
         card.addView(divider());
-        card.addView(row("4", "Open Create Presets and your march size fills in by itself. Open a scout report and the counter picks what to send."));
+        card.addView(row("4", "Open Create Presets and your march size fills in. Open a scout report and scroll the troop list: Scout shows their top-tier mix and what to send."));
         root.addView(card);
 
         root.addView(section("Setup"));
