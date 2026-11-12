@@ -152,14 +152,19 @@ public class ScreenReader {
         String all = text.getText().toLowerCase(Locale.US);
         boolean scout = all.contains("scout report") || all.contains("scout");
         if (scout) {
-            List<ScoutTally.W> ws = new ArrayList<>();
+            List<ScoutTally.W> ws = new ArrayList<>(), ls = new ArrayList<>();
             for (Text.TextBlock b : text.getTextBlocks())
-                for (Text.Line l : b.getLines())
+                for (Text.Line l : b.getLines()) {
+                    Rect lr = l.getBoundingBox();
+                    if (lr != null) ls.add(new ScoutTally.W(l.getText(), lr.left, lr.top, lr.right, lr.bottom));
                     for (Text.Element e : l.getElements()) {
                         Rect r = e.getBoundingBox();
                         if (r != null) ws.add(new ScoutTally.W(e.getText(), r.left, r.top, r.right, r.bottom));
                     }
-            if (tally.feed(ScoutTally.extract(ws), true, System.currentTimeMillis()))
+                }
+            ScoutTally.Read read = ScoutTally.extract(ws);
+            ScoutTally.extractGenerals(ls, read);
+            if (tally.feed(read, true, System.currentTimeMillis()))
                 listener.onScout(tally.toJson());
             return;
         }

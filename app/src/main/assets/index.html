@@ -94,6 +94,12 @@
   .tl .c .ic{width:12px;height:12px}
   .tl .c.z{opacity:.25}
   .tl .sum{width:40px;text-align:right;color:var(--dim)}
+  .kv{display:flex;justify-content:space-between;align-items:center;padding:5px 7px;position:relative;font-size:12px}
+  .kv+.kv::before{content:"";position:absolute;top:0;left:7px;right:0;height:.5px;background:var(--line)}
+  .kv span{color:var(--dim)} .kv b{font-weight:600;font-variant-numeric:tabular-nums}
+  .bt td{padding:4px 6px;font-size:11.5px} .bt th{padding:4px 6px}
+  .bt td.p{color:var(--green)} .bt td.m{color:var(--red)}
+  .bt td:first-child{display:flex;align-items:center;gap:3px} .bt td:first-child .ic{width:13px;height:13px}
   .sh{display:flex;align-items:center;gap:6px;margin-bottom:6px}
   .sh .ic{width:20px;height:20px}
   .sh .tot{font:700 16px/1.1 -apple-system,system-ui,Roboto,sans-serif}
@@ -165,6 +171,7 @@
     <div class="x">
       <h3>Troops by tier</h3>
       <div class="card" id="tierList"></div>
+      <div id="defOut"></div>
       <h3>Or pick their main type</h3>
       <div class="pick" id="enemyPick"></div>
     </div>
@@ -357,8 +364,34 @@ function renderScout(){
     $("tierList").innerHTML=tiers.map(r=>{const s=sums(es.filter(x=>x.r===r));
       return `<div class="tl"><span class="t">T${r}</span>${TYPES.map(t=>`<span class="c c-${t}${s[t]?"":" z"}">${glyph(t)}${s[t]?short(s[t]):"–"}</span>`).join("")}</div>`}).join("");
   } else $("tierList").innerHTML=`<div class="empty">Nothing scanned yet.</div>`;
+  renderDefense();
   buildPick($("enemyPick"));
   reportHeight();
+}
+function renderDefense(){
+  const el=$("defOut"); if(!scout){el.innerHTML="";return}
+  const st=scout.stats||{}, tr=scout.traps||{}, g=scout.gens||[];
+  let h="";
+  // defense: generals, walls, tower, traps
+  const rows=[];
+  if(g.length) rows.push(`<div class="kv"><span>Wall generals</span><b>${g.join(" · ")}</b></div>`);
+  if(scout.wallMax) rows.push(`<div class="kv"><span>Walls HP</span><b>${short(scout.wallCur)} / ${short(scout.wallMax)}</b></div>`);
+  if(scout.tower) rows.push(`<div class="kv"><span>Archer Tower</span><b>Lv ${scout.tower}</b></div>`);
+  if(scout.trapTotal!=null){
+    const kinds={};Object.keys(tr).forEach(k=>{const [n,l]=k.split(" ");(kinds[n]=kinds[n]||[]).push([+l,tr[k]])});
+    const topLv=Math.max(0,...Object.keys(tr).map(k=>+k.split(" ")[1]));
+    const topSum=Object.keys(tr).filter(k=>+k.split(" ")[1]===topLv).reduce((a,k)=>a+tr[k],0);
+    rows.push(`<div class="kv"><span>Traps${st.trap!=null?` · atk +${st.trap}%`:""}</span><b>${short(scout.trapTotal)}${topLv?` <span style="font-weight:400">· Lv${topLv} ${short(topSum)}</span>`:""}</b></div>`);
+  }
+  if(rows.length) h+=`<h3>Their defense</h3><div class="card">${rows.join("")}</div>`;
+  // buffs / debuffs grid
+  const grid=(pre,cls)=>{ const has=TYPES.some(t=>[0,1,2].some(i=>st[`${pre}|${t}|${i}`]!=null)); if(!has) return "";
+    return `<table class="bt"><tr><th></th><th>Atk</th><th>Def</th><th>HP</th></tr>`+TYPES.map(t=>`<tr><td class="c-${t}">${glyph(t)}${NAME[t]}</td>${[0,1,2].map(i=>{const v=st[`${pre}|${t}|${i}`];return `<td class="${cls}">${v==null?"–":(v>0?"+":"")+v+"%"}</td>`}).join("")}</tr>`).join("")+`</table>`; };
+  const b=grid("b","p"), d=grid("d","m");
+  if(b) h+=`<h3>Their troop buffs</h3><div class="card">${b}</div>`;
+  if(d) h+=`<h3>Debuffs they put on you</h3><div class="card">${d}</div>`;
+  if(!b&&!d&&rows.length) h+=`<p class="note">Open the Troop Buff tab to read their buffs too.</p>`;
+  el.innerHTML=h;
 }
 function buildPick(el){
   el.innerHTML="";
